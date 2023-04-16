@@ -165,7 +165,7 @@ our %tithi-titles is export;
         'ru' => 'Саптами'
     },
     'ashtami' => {
-        'en' => 'Ashrami',
+        'en' => 'Ashtami',
         'ru' => 'Аштами'
     },
     'navami' => {
