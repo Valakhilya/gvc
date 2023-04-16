@@ -1,0 +1,7 @@
+#!/usr/bin/zsh
+
+for f in `cat list.lst`
+do
+./parse.raku $f 2021
+./parse.raku $f 2022
+done

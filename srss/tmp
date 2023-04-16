@@ -1,0 +1,4 @@
+#!/usr/bin/env raku
+
+my $str = "31/12/2023;2023-12-31 08:10;2023-12-31 17:32";
+say defined($str.index: "12-31");
