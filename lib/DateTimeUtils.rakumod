@@ -573,8 +573,14 @@ sub add-dates(%map, $year) is export {
             %map{$date}{'ru-line'} = $ru;
         }
         else {
-            %map{$date}{'en-line'} = $en ~ ' ' ~ %map{$date}{'en-line'};
-            %map{$date}{'ru-line'} = $ru ~ ' ' ~ %map{$date}{'ru-line'};
+            if $slug ne $punar-yatra {
+                %map{$date}{'en-line'} = $en ~ ' ' ~ %map{$date}{'en-line'};
+                %map{$date}{'ru-line'} = $ru ~ ' ' ~ %map{$date}{'ru-line'};
+            }
+            else {
+                %map{$date}{'en-line'} = %map{$date}{'en-line'} ~ ' ' ~ $en;
+                %map{$date}{'ru-line'} = %map{$date}{'ru-line'} ~ ' ' ~ $ru;
+            }
         }
     }
 }

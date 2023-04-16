@@ -47,6 +47,7 @@ our constant $nrisimha-chaturdashi-paran is export =
 our constant $janmashtami is export = 'janmashtami';
 our constant $radhashtami is export = 'radhashtami';
 our constant $ratha-yatra is export = 'ratha-yatra';
+our constant $punar-yatra is export = 'punar-yatra';
 our constant $shridhar-maharaj-appearance is export = 
 'shridhar-maharaj-appearance';
 our constant $shridhar-maharaj-birth-year is export = 1895;
