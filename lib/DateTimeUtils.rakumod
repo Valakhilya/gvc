@@ -126,10 +126,6 @@ sub local-time-zone($datetime, $city, $year) is export {
             %dst{'dst2-start'} le $dt.yyyy-mm-dd le %dst{'dst2-end'};
         $dt .= later: :1hour if $dst-offset;
     }
-# for Sukhum etc.
-    if special-city($city) {
-        $dt .= earlier: :1hour;
-    }
     return $dt.yyyy-mm-dd ~ ' ' ~ $dt.hh-mm-ss.chop(3);
 }
 
@@ -411,10 +407,6 @@ sub get-shuddha-paran($dvadashi-sunrise, $dvadashi-sunset,
         $paran-start = $dvadashi-sunrise;
         $paran-end = $dvadashi-sunset;
     }
-    if special-city($city) {
-        $paran-start = one-hour-back($paran-start, $tz);
-        $paran-end = one-hour-back($paran-end, $tz);
-    }
     return ($paran-start, $paran-end);
 }
 
@@ -436,10 +428,6 @@ sub get-viddha-paran($trayodashi-sunrise, $trayodashi-sunset,
         $paran-start = $trayodashi-sunrise;
         $paran-end = $forenoon;
     }
-    if special-city($city) {
-        $paran-start = one-hour-back($paran-start, $tz);
-        $paran-end = one-hour-back($paran-end, $tz);
-    }
     return ($paran-start, $paran-end);
 }
 
@@ -450,10 +438,6 @@ sub get-vyanjuli-paran($sunrise, $sunset, $dvadashi-start, $dvadashi-end,
     my $forenoon = get-forenoon($sunrise, $sunset, $tz);
     $paran-start = $sunrise;
     $paran-end = $dvadashi-end lt $forenoon ?? $dvadashi-end !! $forenoon;
-    if special-city($city) {
-        $paran-start = one-hour-back($paran-start, $tz);
-        $paran-end = one-hour-back($paran-end, $tz);
-    }
     return ($paran-start, $paran-end);
 }
 
@@ -491,10 +475,6 @@ sub get-nakshatra-yoga-paran($sunrise, $sunset, $dvadashi-end, $nakshatra-end,
     else {
         $paran-start = $sunrise;
         $paran-end = $forenoon;
-    }
-    if special-city($city) {
-        $paran-start = one-hour-back($paran-start, $tz);
-        $paran-end = one-hour-back($paran-end, $tz);
     }
     return ($paran-start, $paran-end);
 }
@@ -543,10 +523,6 @@ sub get-vishnu-shrinkhala-yoga-paran($sunrise, $sunset, $dvadashi-end,
         $paran-start = $sunrise;
         $paran-end = $trayodashi-end lt $forenoon ?? $trayodashi-end !!
             $forenoon;
-    }
-    if special-city($city) {
-        $paran-start = one-hour-back($paran-start, $tz);
-        $paran-end = one-hour-back($paran-end, $tz);
     }
     return($paran-start, $paran-end);
 }
