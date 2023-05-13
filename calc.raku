@@ -729,8 +729,9 @@ sub MAIN(Str $city, Int $year) {
                             $forenoon.words[1]);
                     }
                     elsif $slug eq $shridhar-maharaj-appearance {
-                        my $a = $gaurabda-start-year + $y - 
-                            $shridhar-maharaj-birth-year;
+                        $sunrise = %m{$damodar}{$navami}{'K'}{'end-sunrise'};
+                        my $a = get-appearance-year($sunrise, 
+                            $shridhar-maharaj-birth-year);
                         $ru-event = sprintf($ru-event, $a);
                         $en-event = sprintf($en-event, $a);
                     }
@@ -740,14 +741,16 @@ sub MAIN(Str $city, Int $year) {
                         $en-event = sprintf($en-event, $end.words[1]);
                     }
                     elsif $slug eq $gurudev-appearance {
-                        my $a = $gaurabda-start-year + $y - 
-                            $gurudev-birth-year;
+                        $sunrise = %m{$narayan}{$dvitiya}{'K'}{'end-sunrise'};
+                        my $a = get-appearance-year($sunrise, 
+                            $gurudev-birth-year);
                         $ru-event = sprintf($ru-event, $a);
                         $en-event = sprintf($en-event, $a);
                     }
                     elsif $slug eq $sarasvati-thakur-appearance {
-                        my $a = $gaurabda-start-year + $y -
-                            $sarasvati-thakur-birth-year;
+                        $sunrise = %m{$govinda}{$panchami}{'K'}{'end-sunrise'};
+                        my $a = get-appearance-year($sunrise, 
+                            $sarasvati-thakur-birth-year);
                         $ru-event = sprintf($ru-event, $a);
                         $en-event = sprintf($en-event, $a);
                     }

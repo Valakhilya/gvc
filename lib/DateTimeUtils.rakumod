@@ -573,3 +573,8 @@ sub add-event-line($date, %calendar, $en-event, $ru-event) is export {
             %calendar{$date}{'ru-line'};
     }
 }
+
+sub get-appearance-year($sunrise, $birth-year) is export {
+    my $year = $sunrise.substr(0..3).Int;
+    return $year - $birth-year + 1;
+}
