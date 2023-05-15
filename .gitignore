@@ -2,5 +2,12 @@ logs/
 log.log
 go.raku
 gen.raku
+gen_all.raku
 go_all.raku
 index.raku
+*.zip
+calc_all.raku
+ru_json.raku
+en_json.raku
+uas.txt
+parse.raku
