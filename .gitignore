@@ -4,6 +4,8 @@ go.raku
 gen.raku
 gen_all.raku
 go_all.raku
+get_ekadashis.raku
+get_all_ekadashis.raku
 index.raku
 *.zip
 calc_all.raku
@@ -13,3 +15,6 @@ uas.txt
 parse.raku
 en_json_538.json
 ru_json_538.json
+gen_all_ics.raku
+gen_ics.raku
+uuid.raku
