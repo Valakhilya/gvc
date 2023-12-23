@@ -4,6 +4,8 @@ use Data;
 use Constants;
 use Structures;
 
+say @cities;
+
 sub make-date(Str $date) is export {
     my @parts = $date.split('-');
     return Date.new(

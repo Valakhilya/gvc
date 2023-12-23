@@ -230,9 +230,13 @@ sub MAIN(Str $city, Int $year) {
 
     } # end of main cycle
 
+    say "Tithi map Nabadwip:";
     .say for %tithi-map-navadvip.kv;
+    say "Tithi map city:";
     .say for %tithi-map-city.kv;
+    say "Tithi by date:";
     .say for %tithi-by-date.kv;
+    say "Sunrises and sunsets:";
     .say for %tithi-srss.kv;
 
 # calculating ekadashis
@@ -866,6 +870,7 @@ sub MAIN(Str $city, Int $year) {
                 say $paksha;
 
                 my %t = %tithi-map-city{$y}{$masa}{$ekadashi}{$paksha};
+                say "Ekadashi tithi map:";
                 say %t;
                 my $date = %t{'date'};
                 my $name = %t{'name'};
