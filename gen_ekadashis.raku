@@ -144,26 +144,27 @@ sub MAIN(Str $city, Int $year, Str $locale) {
     for %calendar.keys.sort -> $date {
         $month-num = Date.new($date).month;
         my $calendar-year = $date.substr: 0..3;
-        $sun-month = $locale eq 'ru' ?? @ru-months[$month-num - 1]  !! @en-monts[$month-num - 1];
-        if $sun-month ne $head-month {
-            $out ~= "
-            <h2 class='text-center'><u>{$sun-month} {$calendar-year}</u></h2>
-            ";
-            $head-month = $sun-month;
-        }
-
-        $current-masa = $locale eq 'ru' ?? %calendar{$date}{'ru-masa-title'} !! %calendar{$date}{'en-masa-title'};
-
-
-        if (not $calendar-masa) || ($current-masa ne $calendar-masa) {
-            $calendar-masa = $current-masa;
-            $out ~= "
-                <h3 class='text-start text-uppercase'>{$calendar-masa}</h3>
-            ";
-        }
 
         if %calendar{$date}{"{$locale}-line"} {
             if $locale eq 'ru' || $city eq 'navadvip' {
+                $sun-month = $locale eq 'ru' ?? @ru-months[$month-num - 1]  !! @en-monts[$month-num - 1];
+                if $sun-month ne $head-month {
+                    $out ~= "
+                    <h2 class='text-center'><u>{$sun-month} {$calendar-year}</u></h2>
+                    ";
+                    $head-month = $sun-month;
+                }
+
+                $current-masa = $locale eq 'ru' ?? %calendar{$date}{'ru-masa-title'} !! %calendar{$date}{'en-masa-title'};
+
+
+                if (not $calendar-masa) || ($current-masa ne $calendar-masa) {
+                    $calendar-masa = $current-masa;
+                    $out ~= "
+                        <h3 class='text-start text-uppercase'>{$calendar-masa}</h3>
+                    ";
+                }
+
                 $out ~= "<p class='m3 text-start fs-5'>";
                 $out ~= %calendar{$date}{"{$locale}-date-info"};
                 $out ~= %calendar{$date}{"{$locale}-tithi-title"} ~ '. ';
@@ -173,6 +174,24 @@ sub MAIN(Str $city, Int $year, Str $locale) {
             else {
                 my $cline = %calendar{$date}{"en-line"};
                 if $cline.contains('<b>Fast</b>') {
+                    $sun-month = $locale eq 'ru' ?? @ru-months[$month-num - 1]  !! @en-monts[$month-num - 1];
+                    if $sun-month ne $head-month {
+                        $out ~= "
+                        <h2 class='text-center'><u>{$sun-month} {$calendar-year}</u></h2>
+                        ";
+                        $head-month = $sun-month;
+                    }
+
+                    $current-masa = $locale eq 'ru' ?? %calendar{$date}{'ru-masa-title'} !! %calendar{$date}{'en-masa-title'};
+
+
+                    if (not $calendar-masa) || ($current-masa ne $calendar-masa) {
+                        $calendar-masa = $current-masa;
+                        $out ~= "
+                            <h3 class='text-start text-uppercase'>{$calendar-masa}</h3>
+                        ";
+                    }
+
                     $out ~= "<p class='m3 text-start fs-5'>";
                     $out ~= %calendar{$date}{"en-date-info"};
                     $out ~= %calendar{$date}{"en-tithi-title"} ~ '. ';

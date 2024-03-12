@@ -9,21 +9,32 @@ use Data;
 use Config;
 
 sub MAIN(Str $city, Int $year) {
+    #  city is city slug in csv/cities.csv file
+    #  and year is Gaurabda year number
+
     my (%tithi-map-navadvip, %tithi-map-city, %tithi-srss, %tithi-by-date, 
         %calendar); 
 
     # Initialize basic structures
 
-    my $city-tz = tz($city);
-    my @tithis = get-navadvip-tithis($year);
+    my $city-tz = tz($city); #timezone of the city
+    # information about tithis from the csv/navadvip_$year.csv file
+    my @tithis = get-navadvip-tithis($year); 
+    # information about sunrises and sunsets
     my %city-srss = get-city-srss-map($city, $year);
     my %navadvip-srss = get-city-srss-map($navadvip, $year);
     my %nakshatras = get-nakshatras-map($city, $year);
     my %ekadashis-map = get-ekadashis-map();
     my %events = get-events-map();
+    # titles of the tithis
     my %tithi-names = get-tithi-names-map();
 
     @tithis.shift; # skip header
+
+    # We keep in tithi file data for three Gaurabda years:
+    # current year, Govinda masa of previous year and Vishnu masa
+    # of the next year
+    # variable current-masa is the title for masa on the current loop iteration
 
     my $current-masa = '';
     my @masas-list;
@@ -31,16 +42,21 @@ sub MAIN(Str $city, Int $year) {
     loop ( my $i = 0; $i < @tithis.elems; $i++ ) { #main cycle
 
     my $line = @tithis[$i];
-    my ($masa, $tithi, $paksha, $current-date, $tithi-end-navadvip,
+    my ($masa, $tithi, $paksha, $current-date, $end-tithi-navadvip,
         $end-sunrise-navadvip, $end-sunset-navadvip) =
         parse-tithi-line($line);
 
-    # current year is $year of Gaurabda or maybe next year, as calendar also
-    # contains tithi for vishnu masa of the next Gaurabda year.
+    # current year is year of Gaurabda or maybe next or previous year
     
     my $current-year = get-current-year($current-date, $year);
-    my $tithi-end = local-time-zone($tithi-end-navadvip, $city, 
+
+    # end of current tithi for the city
+
+    my $end-tithi-city = local-time-zone($end-tithi-navadvip, $city, 
         $year);
+
+    # if masa from line in the file differ from current-masa, then we put it
+    # in the list
 
     { 
         @masas-list.push: $masa; 
@@ -53,57 +69,71 @@ sub MAIN(Str $city, Int $year) {
     say 'Masa: ' ~ $masa;
     say 'Tithi: ' ~ $tithi;
     say 'Paksha: ' ~ $paksha;
-    say 'Tithi end: ' ~ $tithi-end;
-    say 'Tithi end in Nabadwip: ' ~ $tithi-end-navadvip;
 
-# calculating start date and time for the tithi
+    # calculating start date and time for the tithi
+    # end of previous tithi is start for current 
 
+    my $start-line;
     if ($i > 0) {
-        $line = @tithis[$i - 1];
+        $start-line = @tithis[$i - 1];
     }
-    else { # get Gaura Purnima line from previous year
-        my @last-year-tithis = get-navadvip-tithis($year - 1);
-        my @grep = @last-year-tithis.grep(*.contains(
-            [$govinda, $purnima, 'G'].join: $delimeter));
-        $line = @grep[* - 1];
+    else { # get tithis from the file for previous year
+        my @prev-year-tithis = get-navadvip-tithis($year - 1);
+        my @grep = @prev-year-tithis.grep(*.contains(
+            ['madhava', 'purnima', 'G'].join: $delimeter));
+            $start-line = @grep[* - 1];
     }
-    my ($start-masa, $start-tithi, $start-paksha, $start-date-navadvip, 
-    $tithi-start-navadvip,$start-sunrise-navadvip,$start-sunset-navadvip) =
-        parse-tithi-line($line);
-    my $tithi-start = local-time-zone($tithi-start-navadvip, $city, $year);
-    say 'Tithi start: ' ~ $tithi-start;
-    say 'Tithi start in Navadwip: ' ~ $tithi-start-navadvip;
+    my ($start-masa-navadvip,
+        $start-tithiname-navadvip, 
+        $start-paksha-navadvip, 
+        $start-date-navadvip, 
+        $start-tithi-navadvip,
+        $start-sunrise-navadvip,
+        $start-sunset-navadvip) =
+        parse-tithi-line($start-line);
+    my $start-tithi-city = local-time-zone($start-tithi-navadvip, $city, $year);
+
+    say 'Start date in Navadwip: ' ~ $start-date-navadvip;
+    say 'Start sunrise in Nabadwip: ' ~ $start-sunrise-navadvip;
+    say 'Start sunset in Nabadwip: ' ~ $start-sunset-navadvip;
+    say "Tithi start in $city: " ~ $start-tithi-city;
+    say 'Tithi start in Navadwip: ' ~ $start-tithi-navadvip;
+    say "Tithi end in $city: " ~ $end-tithi-city;
+    say 'Tithi end in Nabadwip: ' ~ $end-tithi-navadvip;
 
 # calculating two sunrises times - it is quite enough
 
-    my $start-date = $tithi-start.words[0];
+    my $start-date-city = $start-tithi-city.words[0];
 
-    say 'Tithi start sunrise date: ' ~ $start-date;
+    say 'Tithi start sunrise date: ' ~ $start-date-city;
     say 'Tithi start sunrise date in Nabadwip: ' ~ $start-date-navadvip;
 
 # Note that date of the next day and date of the end of tithi may not be same
 
-    my $next-date = get-tomorrow($start-date);
+    my $next-date-city = get-tomorrow($start-date-city);
     my $next-date-navadvip = get-tomorrow($start-date-navadvip);
 
-    say 'Tithi next sunrise date: ' ~ $next-date;
+    say "Tithi next sunrise date in $city: " ~ $next-date-city;
     say 'Tithi next sunrise date in Nabadwip: ' ~ $next-date-navadvip;
 
-    my $start-sunrise;
+    my $start-sunrise-city;
     if $city eq $navadvip {
-        $start-sunrise = $start-sunrise-navadvip
+        $start-sunrise-city = $start-sunrise-navadvip
     }
-    if not $start-sunrise {
-        $start-sunrise = get-city-sunrise($start-date, $city, %city-srss)
+    if not $start-sunrise-city {
+        $start-sunrise-city = 
+            get-city-sunrise($start-date-city, $city, %city-srss);
     }
-    { say $start-date; die 'No sunrise' } unless $start-sunrise.Str.trim;
-    say 'Tithi start sunrise: ' ~ $start-sunrise;
+    { say $start-date-city; die 'No sunrise' } \
+        unless $start-sunrise-city.Str.trim;
+
+    say "Tithi start sunrise in $city: " ~ $start-sunrise-city;
     say 'Tithi start sunrise in Nabadwip: '~$start-sunrise-navadvip;
 
 # next day sunrise
 
-    my $next-day-sunrise;
-    my ($next-masa, $next-tithi, $next-paksha,
+    my $next-day-sunrise-city;
+    my ($next-masa-navadvip, $next-tithi-navadvip, $next-paksha-navadvip, 
         $next-day-end-navadvip, $next-day-sunrise-navadvip, 
         $next-day-sunset-navadvip);
 
@@ -113,10 +143,14 @@ sub MAIN(Str $city, Int $year) {
         }
         else {
             my $next-line = @tithis[$i + 1];
-            if $next-line.contains($next-date) {
-                my ($next-masa, $next-tithi, $next-paksha, $next-date-navadvip, 
-                    $next-day-end-navadvip, $next-day-sunrise-navadvip, 
-                    $next-day-sunset-navadvip) = parse-tithi-line($line);
+            if $next-line.contains($next-date-navadvip) {
+                ($next-masa-navadvip,
+                $next-tithi-navadvip,
+                $next-paksha-navadvip,
+                $next-date-navadvip, 
+                $next-day-end-navadvip,
+                $next-day-sunrise-navadvip, 
+                $next-day-sunset-navadvip) = parse-tithi-line($next-line);
             }
         }
     }
@@ -124,52 +158,65 @@ sub MAIN(Str $city, Int $year) {
         $next-day-sunrise-navadvip = get-city-sunrise($next-date-navadvip,
             $navadvip, %navadvip-srss);
     }
-    $next-day-sunrise = $city eq $navadvip ?? $next-day-sunrise-navadvip 
-            !! get-city-sunrise($next-date, $city, %city-srss);
+    $next-day-sunrise-city = $city eq $navadvip ?? $next-day-sunrise-navadvip 
+            !! get-city-sunrise($next-date-navadvip, $city, %city-srss);
 
-    say 'Tithi next day sunrise: ' ~ $next-day-sunrise;
-    say 'Tithi next day sunrise in Nabadwip: '~$next-day-sunrise-navadvip;
+    say 'Tithi next day sunrise in Nabadwip: '~ $next-day-sunrise-navadvip;
+    say "Tithi next day sunrise in $city: " ~ $next-day-sunrise-city;
 
-    my $end-date = $tithi-end.words[0];
-    my $end-sunrise = $city eq $navadvip ?? $end-sunrise-navadvip
-        !! get-city-sunrise($end-date, $city, %city-srss);
+    my $end-date-city = $end-tithi-city.words[0];
+    my $end-sunrise-city = $city eq $navadvip ?? $end-sunrise-navadvip
+        !! get-city-sunrise($end-date-city, $city, %city-srss);
 
-# sunset
-    my $end-sunset;
+    say "End date in $city: " ~ $end-date-city;
+    say "End sunrise in $city: " ~ $end-sunrise-city;
+
+# sunsets
+
+    my $end-date-navadvip = $end-tithi-navadvip.words[0];
     if not $end-sunset-navadvip {
-        $end-sunset-navadvip = get-city-sunset($end-date, $navadvip, 
+        $end-sunset-navadvip = get-city-sunset($end-date-navadvip, $navadvip, 
             %navadvip-srss);
     }
-    $end-sunset = $city eq $navadvip ?? $end-sunset-navadvip 
-        !! get-city-sunset($end-date, $city, %city-srss);
+    my $end-sunset-city = $city eq $navadvip ?? $end-sunset-navadvip 
+        !! get-city-sunset($end-date-city, $city, %city-srss);
+
+    say "End sunset in Nabadwip: " ~ $end-sunset-navadvip;
+    say "End sunset in $city: " ~ $end-sunset-city;
 
 # calculating date of tithi in Gregorian
 
-    $line = @tithis[$i];
-    my ($date, $type, $purity, $arunoday) = calculate-tithi-date($tithi-start, 
-        $tithi-end, $start-sunrise, $next-day-sunrise, $end-sunrise, 
-        $line.contains($ekadashi));
-    my ($date-navadvip, $type-navadvip, $purity-navadvip, $arunoday-navadvip) =
-        calculate-tithi-date($tithi-start-navadvip, $tithi-end-navadvip, 
-        $start-sunrise-navadvip, $next-day-sunrise-navadvip, 
-        $end-sunrise-navadvip, $line.contains($ekadashi));
-        
-    say 'Tithi date: ' ~ $date;
-    say 'Tithi type: ' ~ $type;
-    say 'Tithi purity: ' ~ $purity;
-    say 'Arunoday: ' ~ $arunoday;
+    my ($date-city, $type-city, $purity-city, $arunoday-city) = 
+        calculate-tithi-date(
+            $start-tithi-city, 
+            $end-tithi-city,
+            $start-sunrise-city,
+            $next-day-sunrise-city,
+            $end-sunrise-city, 
+            @tithis[$i].contains($ekadashi));
 
+    my ($date-navadvip, $type-navadvip, $purity-navadvip, $arunoday-navadvip) =
+        calculate-tithi-date(
+            $start-tithi-navadvip,
+            $end-tithi-navadvip, 
+            $start-sunrise-navadvip,
+            $next-day-sunrise-navadvip, 
+            $end-sunrise-navadvip, $line.contains($ekadashi));
+        
+    say "Tithi date in $city: " ~ $date-city;
+    say "Tithi type in $city: " ~ $type-city;
+    say "Tithi purity in $city: " ~ $purity-city;
+    say "Arunoday in $city: " ~ $arunoday-city;
     say 'Tithi date in Navadwip: ' ~ $date-navadvip;
     say 'Tithi type in Navadwip: ' ~ $type-navadvip;
     say 'Tithi purity in Nabadwip: ' ~ $purity-navadvip;
     say 'Arunoday in Nabadwip: ' ~ $arunoday-navadvip;
 
-
 # putting to maps
     
     my %h1 = (
-        'start' => $tithi-start-navadvip,
-        'end' => $tithi-end-navadvip,
+        'start' => $start-tithi-navadvip,
+        'end' => $end-tithi-navadvip,
         'start-sunrise' => $start-sunrise-navadvip,
         'next-day-sunrise' => $next-day-sunrise-navadvip,
         'end-sunrise' => $end-sunrise-navadvip,
@@ -186,16 +233,16 @@ sub MAIN(Str $city, Int $year) {
     %tithi-map-navadvip{$current-year}{$masa}{$tithi}{$paksha} = %h1;
 
     my %h2 = (
-        'start' => $tithi-start,
-        'end' => $tithi-end,
-        'start-sunrise' => $start-sunrise,
-        'next-day-sunrise' => $next-day-sunrise,
-        'end-sunrise' => $end-sunrise,
-        'end-sunset' => $end-sunset,
-        'date' => $date,
-        'arunoday' => $arunoday,
-        'type' => $type,
-        'purity' => $purity,
+        'start' => $start-tithi-city,
+        'end' => $end-tithi-city,
+        'start-sunrise' => $start-sunrise-city,
+        'next-day-sunrise' => $next-day-sunrise-city,
+        'end-sunrise' => $end-sunrise-city,
+        'end-sunset' => $end-sunset-city,
+        'date' => $date-city,
+        'arunoday' => $arunoday-city,
+        'type' => $type-city,
+        'purity' => $purity-city,
         'year' => $current-year,
         'masa' => $masa,
         'tithi' => $tithi,
@@ -209,6 +256,10 @@ sub MAIN(Str $city, Int $year) {
     else {
         %tithi-by-date{$date-navadvip}{$shuddha} = %h1;
     }
+
+    # double the tithi in sampurna case, in order that date of next or 
+    # previous day in sampurna also point to this tithi
+
     if $type-navadvip eq $sampurna {
         if $tithi eq $ekadashi {
             my $yesterday = get-yesterday($date-navadvip);
@@ -230,26 +281,19 @@ sub MAIN(Str $city, Int $year) {
 
     } # end of main cycle
 
-    say "Tithi map Nabadwip:";
-    .say for %tithi-map-navadvip.kv;
-    say "Tithi map city:";
-    .say for %tithi-map-city.kv;
-    say "Tithi by date:";
-    .say for %tithi-by-date.kv;
-    say "Sunrises and sunsets:";
-    .say for %tithi-srss.kv;
-
 # calculating ekadashis
 
-    for [$year, $year + 1] -> $y {
+    say '';
+    say 'Calculating ekadashis: ';
+    for [$year - 1, $year, $year + 1] -> $y {
         for @masas -> $masa {
             for ['K', 'G'] -> $paksha {
-                last unless %tithi-map-city{$y}{$masa}{$ekadashi}{$paksha};
+                next unless %tithi-map-city{$y}{$masa}{$ekadashi}{$paksha};
                 say '=' x 20;
                 say 'Year: ' ~ $y;
                 say 'Masa: ' ~ $masa;
                 say 'Paksha: ' ~ $paksha;
-                say %tithi-map-city{$y}{$masa}{$ekadashi}{$paksha};
+
                 my %map = %tithi-map-city{$y}{$masa}{$ekadashi}{$paksha};
                 my %e = %ekadashis-map{$masa}{$paksha};
                 my $date = %map{'date'};
@@ -301,6 +345,7 @@ sub MAIN(Str $city, Int $year) {
                 say 'Dvadashi date: ' ~ $dvadashi-date;
                 say 'Dvadashi sunrise ' ~ $dvadashi-sunrise;
                 say 'Dvadashi sunset ' ~ $dvadashi-sunset;
+
                 my @nakshatras-list = %nakshatras{$y}{$masa}.values;
 
 # Nakshatra yoga test
@@ -418,6 +463,7 @@ sub MAIN(Str $city, Int $year) {
                 say 'Vyanjuli test: ' ~ $vyanjuli-test;
 
                 my ($fast-date, $fast-type, $mahadvadashi-name);
+                $mahadvadashi-name = '';
                 if $nakshatra-yoga {
                     $fast-type = $nakshatra-type;
                     $fast-date = $next-date;
@@ -613,13 +659,15 @@ sub MAIN(Str $city, Int $year) {
                say 'Paran start: ' ~ $paran-start;
                say 'Paran end: ' ~ $paran-end;
 
+                # putting everything about ekadashi into map
+
                 %tithi-map-city{$y}{$masa}{$ekadashi}{$paksha}{'fast-date'} = 
                     $fast-date;
                 %tithi-map-city{$y}{$masa}{$ekadashi}{$paksha}{'fast-type'} = 
                     $fast-type;
                 %tithi-map-city{$y}{$masa}{$ekadashi}{$paksha}{'paran-date'} = 
                     $paran-date;
-                %tithi-map-city{$y}{$masa}{$ekadashi}{$paksha}{'mahadvadashi-name'}= 
+        %tithi-map-city{$y}{$masa}{$ekadashi}{$paksha}{'mahadvadashi-name'} = 
                     $mahadvadashi-name;
                 %tithi-map-city{$y}{$masa}{$ekadashi}{$paksha}{'is-vsy'}= 
                     $vishnu-shrinkhala-yoga-test;
@@ -629,16 +677,15 @@ sub MAIN(Str $city, Int $year) {
                     $paran-end;
                 %tithi-map-city{$y}{$masa}{$ekadashi}{$paksha}{'name'} =
                     $slug;
+                say 'Ekadashi info:';
+                say %tithi-map-city{$y}{$masa}{$ekadashi}{$paksha};
             }
         }
     }
 
-
 # Puting masas titles in dates structure
 
     my %masa-titles-map = get-masa-titles-map();
-
-    .say for %masa-titles-map.kv;
 
 # detecting purushottam
 
@@ -651,14 +698,26 @@ sub MAIN(Str $city, Int $year) {
     }
 
     say 'Index of Purushottam: ' ~ $purushottam-index if $purushottam-founded;
-    my $masa-before-purushottam = @masas-list[$purushottam-index - 1];
+    my $masa-before-purushottam = $purushottam-founded ?? 
+        @masas-list[$purushottam-index - 1] !! '';
 
-# putting events
-    my $y = $year;
+    say 'Putting events';
+    # putting events
+
+    my $y;
     my (@pakshas, @tithi-list);
+
     loop ($i = 0; $i < @masas-list.elems; $i++) {
         my $masa = @masas-list[$i];
-        $y = $year + 1 if $i > 0 && $masa eq $vishnu;
+        if $i == 0 {
+            $y = $year - 1;
+        }
+        elsif $i > 1 && @masas-list[$i] eq $vishnu {
+            $y = $year + 1;
+        }
+        else {
+            $y = $year;
+        }
         if $purushottam-founded && $masa eq $masa-before-purushottam
             && $i < $purushottam-index {
             @tithi-list = %tithi-names{'K'}.List;
@@ -685,14 +744,10 @@ sub MAIN(Str $city, Int $year) {
                my $tithi = @tithi-list[$index];
                 if %events{$masa}{$tithi}{$paksha} {
                     my %e = %events{$masa}{$tithi}{$paksha};
-                        last if not \
+                        next if not \
                         %tithi-map-navadvip{$y}{$masa}{$tithi}{$paksha}:exists;
                     my %t = %tithi-map-navadvip{$y}{$masa}{$tithi}{$paksha};
                     say '';
-                    say 'Year: ' ~ $y;
-                    say 'Masa: ' ~ $masa;
-                    say 'Tithi: ' ~ $tithi;
-                    say 'Paksha: ' ~ $paksha;
 
 # forming line
 
@@ -760,6 +815,7 @@ sub MAIN(Str $city, Int $year) {
                     }
                     say 'Rus line: ' ~ $ru-event;
                     say 'Eng line: ' ~ $en-event;
+                    say 'Year: ' ~ $y;
                     my $date = %t{'date'};
                     my $type = %t{'type'};
                     my $purity = %t{'purity'};
@@ -835,23 +891,26 @@ sub MAIN(Str $city, Int $year) {
 
 
 # Parikrama
-    my $gaura-purnima-date = %gaurabda-years{$year}{'end'};
-    my Str $adhivas-date = 
-    Str(Date.new($gaura-purnima-date).earlier: :5days);
-    my $first-day = get-tomorrow($adhivas-date);
-    my $second-day = get-tomorrow($first-day);
-    my $third-day = get-tomorrow($second-day);
-    my $fourth-day = get-tomorrow($third-day);
-    add-parikrama-day($adhivas-date, %calendar, $parikrama-adhivas, 'en');
-    add-parikrama-day($adhivas-date, %calendar, $parikrama-adhivas-ru, 'ru');
-    add-parikrama-day($first-day, %calendar, $parikrama-first-day, 'en');
-    add-parikrama-day($first-day, %calendar, $parikrama-first-day-ru, 'ru');
-    add-parikrama-day($second-day, %calendar, $parikrama-second-day, 'en');
-    add-parikrama-day($second-day, %calendar, $parikrama-second-day-ru, 'ru');
-    add-parikrama-day($third-day, %calendar, $parikrama-third-day, 'en');
-    add-parikrama-day($third-day, %calendar, $parikrama-third-day-ru, 'ru');
-    add-parikrama-day($fourth-day, %calendar, $parikrama-fourth-day, 'en');
-    add-parikrama-day($fourth-day, %calendar, $parikrama-fourth-day-ru, 'ru');
+
+    for [$year - 1, $year] -> $y {
+        my $gaura-purnima-date = %gaurabda-years{$y}{'end'};
+        my Str $adhivas-date = 
+        Str(Date.new($gaura-purnima-date).earlier: :5days);
+        my $first-day = get-tomorrow($adhivas-date);
+        my $second-day = get-tomorrow($first-day);
+        my $third-day = get-tomorrow($second-day);
+        my $fourth-day = get-tomorrow($third-day);
+add-parikrama-day($adhivas-date, %calendar, $parikrama-adhivas, 'en');
+add-parikrama-day($adhivas-date, %calendar, $parikrama-adhivas-ru, 'ru');
+add-parikrama-day($first-day, %calendar, $parikrama-first-day, 'en');
+add-parikrama-day($first-day, %calendar, $parikrama-first-day-ru, 'ru');
+add-parikrama-day($second-day, %calendar, $parikrama-second-day, 'en');
+add-parikrama-day($second-day, %calendar, $parikrama-second-day-ru, 'ru');
+add-parikrama-day($third-day, %calendar, $parikrama-third-day, 'en');
+add-parikrama-day($third-day, %calendar, $parikrama-third-day-ru, 'ru');
+add-parikrama-day($fourth-day, %calendar, $parikrama-fourth-day, 'en');
+add-parikrama-day($fourth-day, %calendar, $parikrama-fourth-day-ru, 'ru');
+    }
 
 # Ratha Yatra, New Year etc.
 
@@ -860,11 +919,12 @@ sub MAIN(Str $city, Int $year) {
 # Ekadashis
 
     my %maha-map = get-mahadvadashis-map();
-    for [$year, $year + 1] -> $y {
+    for [$year -1, $year, $year + 1] -> $y {
         for @masas-list.unique -> $masa {
             for <K G> -> $paksha {
                 next if not %tithi-map-city{$y}{$masa}{$ekadashi}{$paksha};
                 say '';
+                say 'Adding ekadahis info:';
                 say $y;
                 say $masa;
                 say $paksha;
@@ -872,6 +932,7 @@ sub MAIN(Str $city, Int $year) {
                 my %t = %tithi-map-city{$y}{$masa}{$ekadashi}{$paksha};
                 say "Ekadashi tithi map:";
                 say %t;
+
                 my $date = %t{'date'};
                 my $name = %t{'name'};
                 my $en-name = %ekadashis-map{$masa}{$paksha}{'name'} ~ '.';
@@ -1005,11 +1066,13 @@ sub MAIN(Str $city, Int $year) {
         my $ru-masa-title = %masa-titles-map{$masa}{'ru'};
         my $en-masa-title = %masa-titles-map{$masa}{'en'};
         my ($en-tithi-title, $ru-tithi-title);
-        if $masa eq $masa-before-purushottam && $paksha eq 'K' {
+        if $purushottam-founded && 
+            $masa eq $masa-before-purushottam && $paksha eq 'K' {
             $ru-masa-title ~= $first-half-ru;
             $en-masa-title ~= $first-half-en;
         }
-        elsif $masa eq $masa-before-purushottam && $paksha eq 'G' {
+        elsif $purushottam-founded && 
+            $masa eq $masa-before-purushottam && $paksha eq 'G' {
             $ru-masa-title ~= $second-half-ru;
             $en-masa-title ~= $second-half-en;
         }
@@ -1041,7 +1104,7 @@ sub MAIN(Str $city, Int $year) {
 
 # putting to file
 
-    "calendars/json/{$city}_$year.json".IO.spurt: to-json %calendar, :sorted-keys;
+"calendars/json/{$city}_$year.json".IO.spurt: to-json %calendar, :sorted-keys;
     'done.'.say;
 
     exit 0;

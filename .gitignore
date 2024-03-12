@@ -1,4 +1,5 @@
 logs/
+lib/.precomp/
 log.log
 go.raku
 gen.raku
@@ -18,3 +19,4 @@ ru_json_538.json
 gen_all_ics.raku
 gen_ics.raku
 uuid.raku
+docs/Scan.pdf

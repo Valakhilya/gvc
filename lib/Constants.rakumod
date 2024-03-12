@@ -69,20 +69,34 @@ our constant $ru-paran is export = '<b>Паран %s — %s.</b>';
 our constant $en-paran is export = 'Paran between %s and %s.';
 our constant $it-is-fast-ru is export = '<b>Пост.</b>';
 our constant $it-is-fast-en is export = '<b>Fast</b>.';
-our constant $no-fast-en is export = 'No fast today (because of dashami viddha at dawn).';
-our constant $no-fast-ru is export = '<b>Экадаши, но нет поста (поскольку <em>дашами виддха</em>).</b>';
-our constant $no-fast-dvadashi-en is export = 'No fast today (because next day is mahadvadashi).';
-our constant $no-fast-dvadashi-ru is export = 'Экадаши, но нет поста (поскольку завтра махадвадаши).';
-our constant $ru-vsy1 is export = 'Пост на Вишну-шринкхала-йогу, а тажке в честь явления Господа Ваманы.';
-our constant $en-vsy1 is export = '<b>Vishnu-shrinkhala-yoga. Fast for Vamanadev appearance.</b>';
-our constant $en-vsy2 is export = 'Fast for vishnu-shrinkhala-yoga and %s';
-our constant $ru-vsy2 is export = 'Пост на Вишну-шринкхала-йогу и %s.';
-our constant $no-fast-vsy-en is export = 'No fast today because of Vishnu-shrinkhala-yoga tomorrow.';
-our constant $no-fast-vsy-ru is export = 'Экадаши, но нет поста (поскольку завтра пост на Вишну-шринкхала-йогу).';
-our constant $ru-vsy3 is export = 'Пост на Вишну-шринкхала-йогу и явление Ваманадева.';
-our constant $en-vsy3 is export = '<b>Fast for Vishnu-shrinkhala-yoga and appearance of Vamanadev</b>.';
-our constant $ru-vsy4 is export = 'Пост на Вишну-шринкхала-йогу, %s и явление Ваманадева.';
-our constant $en-vsy4 is export = '<b>Fast for Vishnu-shrinkhala-yoga, %s and Vamanadev appearance</b>.';
+our constant $no-fast-en is export = 
+'No fast today (because of dashami viddha at dawn).';
+our constant $no-fast-ru is export = 
+'<b>Экадаши, но нет поста (поскольку <em>дашами виддха</em>).</b>';
+our constant $no-fast-dvadashi-en is export = 
+'No fast today (because next day is mahadvadashi).';
+our constant $no-fast-dvadashi-ru is export = 
+'Экадаши, но нет поста (поскольку завтра махадвадаши).';
+our constant $ru-vsy1 is export = 
+'Пост на Вишну-шринкхала-йогу, а тажке в честь явления Господа Ваманы.';
+our constant $en-vsy1 is export = 
+'<b>Vishnu-shrinkhala-yoga. Fast for Vamanadev appearance.</b>';
+our constant $en-vsy2 is export = 
+'Fast for vishnu-shrinkhala-yoga and %s';
+our constant $ru-vsy2 is export = 
+'Пост на Вишну-шринкхала-йогу и %s.';
+our constant $no-fast-vsy-en is export = 
+'No fast today because of Vishnu-shrinkhala-yoga tomorrow.';
+our constant $no-fast-vsy-ru is export = 
+'Экадаши, но нет поста (поскольку завтра пост на Вишну-шринкхала-йогу).';
+our constant $ru-vsy3 is export = 
+'Пост на Вишну-шринкхала-йогу и явление Ваманадева.';
+our constant $en-vsy3 is export = 
+'<b>Fast for Vishnu-shrinkhala-yoga and appearance of Vamanadev</b>.';
+our constant $ru-vsy4 is export = 
+'Пост на Вишну-шринкхала-йогу, %s и явление Ваманадева.';
+our constant $en-vsy4 is export = 
+'<b>Fast for Vishnu-shrinkhala-yoga, %s and Vamanadev appearance</b>.';
 our constant $parikrama-adhivas is export = Q|<b>Adhivas festival of </b> 
 <a href="http://scamath.com/calendar_events/03_NabadwipDhamParikrama.html">
 <b>Sri Nabadwip Dham Parikrama.</b></a> 

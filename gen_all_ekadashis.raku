@@ -10,7 +10,7 @@ for @list -> $line {
    $city = @fields[1];
    say $city;
    for ['en', 'ru'] -> $locale {
-        $command = "./gen_ekadashis.raku {$city} 538 {$locale}";
+        $command = "./gen_ekadashis.raku {$city} 539 {$locale}";
         shell $command;
     }
 }

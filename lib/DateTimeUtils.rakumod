@@ -4,14 +4,23 @@ use Data;
 use Constants;
 use Structures;
 
-say @cities;
-
 sub make-date(Str $date) is export {
     my @parts = $date.split('-');
     return Date.new(
         <day> => @parts[2],
         <month> => @parts[1],
         <year> => @parts[0]
+    );
+}
+
+sub make-datetime($y, $m, $d, $hh, $mm, $tz) is export {
+    return DateTime.new(
+        year => $y,
+        month => $m,
+        day => $d,
+        hour => $hh,
+        minute => $mm,
+        timezone => $tz
     );
 }
 
@@ -88,17 +97,6 @@ sub get-city-sunset($date, $city, %map) is export {
     return $sunset;
 }
 
-sub make-datetime($y, $m, $d, $hh, $mm, $tz) is export {
-    return DateTime.new(
-        year => $y,
-        month => $m,
-        day => $d,
-        hour => $hh,
-        minute => $mm,
-        timezone => $tz
-    );
-}
-
 sub get-dst-data($city, $year) is export {
     my $dst-times = "csv/dst.csv";
     my $line = $dst-times.IO.lines.grep(*.contains("$city;$year"))[0];
@@ -112,7 +110,7 @@ sub get-dst-data($city, $year) is export {
 }
 
 sub local-time-zone($datetime, $city, $year) is export {
-    my Bool $dst-offset;
+    my Bool $is-dst-offset;
     my DateTime $dt;
     my $tz = tz($city);
     my %dst = get-dst-data($city, $year);
@@ -123,10 +121,10 @@ sub local-time-zone($datetime, $city, $year) is export {
     $dt .= in-timezone($tz) unless $tz == $india-tz;
 # dst
     if (%dst{'dst1-start'}) {
-        $dst-offset = %dst{'dst1-start'} le $dt.yyyy-mm-dd 
+        $is-dst-offset = %dst{'dst1-start'} le $dt.yyyy-mm-dd 
             le %dst{'dst1-end'} ||
             %dst{'dst2-start'} le $dt.yyyy-mm-dd le %dst{'dst2-end'};
-        $dt .= later: :1hour if $dst-offset;
+        $dt .= later: :1hour if $is-dst-offset;
     }
     return $dt.yyyy-mm-dd ~ ' ' ~ $dt.hh-mm-ss.chop(3);
 }
@@ -191,9 +189,17 @@ sub get-city-srss-map($city, $year) is export {
 }
 
 sub get-current-year($date, $year) is export {
-    my $current-year = $date le %gaurabda-years{$year}{'end'} ?? 
-        $year.Int !! $year.Int + 1; 
-    return $current-year;
+    my $cur-year-end = %gaurabda-years{$year}{'end'};
+    my $prev-year-end = %gaurabda-years{$year - 1}{'end'};
+    if $date le $prev-year-end {
+        return $year - 1;
+    }
+    elsif $date le $cur-year-end {
+        return $year;
+    }
+    else {
+        return $year + 1;
+    }
 }
 
 sub get-nakshatras-map($city, $year) is export {
@@ -270,7 +276,7 @@ sub get-mahadvadashis-map() is export {
 sub get-tithi-names-map() is export {
     my %map;
     my @tithi-names = 'csv/tithis.csv'.IO.lines;
-    @tithi-names.shift;
+    @tithi-names.shift; # skip header
     for @tithi-names -> $line {
         my ($tithi, $paksha, $en, $ru) = $line.split: $delimeter;
         %map{$paksha}.push: $tithi;
@@ -289,15 +295,25 @@ sub calculate-tithi-date($tithi-start-str, $tithi-end-str,
     $type = $shuddha;
     $purity = $shuddha;
 
+    # to calculate the date associated with a particular tithi, we need to take
+    # the time of its beginning and the time of its end and determine which
+    # sunrise is between these two points. The date of this sunrise will be the
+    # date for the entire tithi.
+
     if ($tithi-start-str gt $tithi-start-sunrise-str 
         && $tithi-end-str ge $next-day-sunrise-str) {
         $date = $next-day-date;
     }
 
+    # if  tithi starts before sunrise of start day, then assume that
+    # date is start day date
+
     if ($tithi-start-str && ($tithi-start-str le $tithi-start-sunrise-str)) {
         $date = $tithi-start-str.words[0];
     }
 
+    # but if start and end of tithi falls between two sunrises, then
+    # this is kshaya situation and date is next day date after start day.
 
     if ($tithi-start-str && $tithi-start-str gt $tithi-start-sunrise-str &&
         $tithi-end-str lt $next-day-sunrise-str) {
@@ -311,12 +327,19 @@ sub calculate-tithi-date($tithi-start-str, $tithi-end-str,
         $date = $next-day-date;
     }
 
+    # sampurna case. Normally date remains same -- first day date of tithi,
+    # but for ekadashi next day is taken
+
     if ($next-day-sunrise-str && ($tithi-end-str ge $next-day-sunrise-str &&
         $tithi-start-str le $tithi-start-sunrise-str)) {
         $type = $sampurna;
         {$date = $next-day-date;$purity = $shuddha} if $is-ekadashi;
     }
 
+
+    # in some very rare cases tithi may reach even next sunrise after 
+    # end date
+    
     if ($end-sunrise && $next-day-sunrise-str && 
         $end-sunrise gt $next-day-sunrise-str && 
         $tithi-end-str ge $end-sunrise) {
@@ -324,6 +347,10 @@ sub calculate-tithi-date($tithi-start-str, $tithi-end-str,
         $date = $is-ekadashi ?? $end-sunrise.words[0] !! $next-day-date;
         $purity = $shuddha if $is-ekadashi;
         }
+
+    # Now calculate the purity of tithi: take the sunrise which dates entire
+    # tithi and substract 96 min from it; then compare it with the start time
+
 
         my $sunrise-for-arunoday = $tithi-start-str.contains($date) ?? 
             $tithi-start-sunrise-str !! $next-day-sunrise-str;
@@ -363,7 +390,6 @@ sub get-forenoon($sunrise, $sunset, $tz) is export {
     $sunrise-dt = datetime-from-str($sunrise, $tz);
     $sunset-dt = datetime-from-str($sunset, $tz);
     my $duration = floor(1/3 * ($sunset-dt - $sunrise-dt));
-    say 'Forenoon: ' ~ datetime-to-str($sunrise-dt + Duration.new: $duration);
     return datetime-to-str($sunrise-dt + Duration.new: $duration);
 }
 
@@ -398,6 +424,8 @@ sub get-shuddha-paran($dvadashi-sunrise, $dvadashi-sunset,
     my $tz = tz($city);
     my $forenoon = get-forenoon($dvadashi-sunrise, $dvadashi-sunset, $tz);
     my $quarter = get-quarter($dvadashi-start, $dvadashi-end, $tz);
+    say 'Quarter: ' ~ $quarter;
+    say 'Purvahna: ' ~ $forenoon;
     $paran-start = $quarter ge $dvadashi-sunrise ?? $quarter
         !! $dvadashi-sunrise;
     $paran-end = $dvadashi-end gt $forenoon ?? $forenoon !! $dvadashi-end;
@@ -418,6 +446,9 @@ sub get-viddha-paran($trayodashi-sunrise, $trayodashi-sunset,
     my $tz = tz($city);
     my $forenoon = get-forenoon($trayodashi-sunrise, $trayodashi-sunset, 
         $tz);
+    say 'Trayodashi sunrise: ' ~ $trayodashi-sunrise;
+    say 'Trayodashi sunset: ' ~ $trayodashi-sunset;
+    say 'Purvahna: ' ~ $forenoon;
     $paran-start = $dvadashi-end gt $trayodashi-sunrise ?? $dvadashi-end
         !! $trayodashi-sunrise;
     $paran-end = $trayodashi-end lt $forenoon ?? $trayodashi-end
@@ -438,6 +469,7 @@ sub get-vyanjuli-paran($sunrise, $sunset, $dvadashi-start, $dvadashi-end,
     my ($paran-start, $paran-end);
     my $tz = tz($city);
     my $forenoon = get-forenoon($sunrise, $sunset, $tz);
+    say 'Purvahna: ' ~ $forenoon;
     $paran-start = $sunrise;
     $paran-end = $dvadashi-end lt $forenoon ?? $dvadashi-end !! $forenoon;
     return ($paran-start, $paran-end);
@@ -448,6 +480,7 @@ sub get-nakshatra-yoga-paran($sunrise, $sunset, $dvadashi-end, $nakshatra-end,
     my ($paran-start, $paran-end);
     my $tz = tz($city);
     my $forenoon = get-forenoon($sunrise, $sunset, $tz);
+    say 'Purvahna: ' ~ $forenoon;
     if $dvadashi-end gt $sunrise && $nakshatra-end gt $dvadashi-end {
         $paran-start = $sunrise;
         $paran-end = $dvadashi-end gt $forenoon ?? $forenoon !!
@@ -486,6 +519,7 @@ sub get-vishnu-shrinkhala-yoga-paran($sunrise, $sunset, $dvadashi-end,
     my ($paran-start, $paran-end);
     my $tz = tz($city);
     my $forenoon = get-forenoon($sunrise, $sunset, $tz);
+    say 'Purvahna: ' ~ $forenoon;
 
     if $yoga-type == 1 {
         if $dvadashi-end gt $sunrise && $nakshatra-end gt $sunrise {
@@ -532,6 +566,10 @@ sub get-vishnu-shrinkhala-yoga-paran($sunrise, $sunset, $dvadashi-end,
 sub add-parikrama-day($date, %map, $dataline, $locale) is export {
     my $key = "{$locale}-line";
     my $line = $dataline.lines.join: ' ';
+    say '';
+    say 'Adding parikrama data:';
+    say 'Date: ' ~ $date;
+    say $line;
     if not %map{$date}{$key} {
         %map{$date}{$key} = $line
     } 
@@ -546,6 +584,10 @@ sub add-dates(%map, $year) is export {
     for @list -> $line {
         my ($y, $slug, $date, $en, $ru) = $line.split: $delimeter;
         next unless $y.Int == $year.Int;
+        say '';
+        say 'Adding sun event: ';
+        say $en;
+        say $ru;
         if not %map{$date} {
             %map{$date}{'en-line'} = $en;
             %map{$date}{'ru-line'} = $ru;
@@ -564,6 +606,11 @@ sub add-dates(%map, $year) is export {
 }
 
 sub add-event-line($date, %calendar, $en-event, $ru-event) is export {
+    say '';
+    say 'Adding event lines:';
+    say 'Date: ' ~ $date;
+    say $en-event;
+    say $ru-event;
     if not %calendar{$date} {
         %calendar{$date}{'en-line'} = $en-event;
         %calendar{$date}{'ru-line'} = $ru-event;
@@ -579,4 +626,68 @@ sub add-event-line($date, %calendar, $en-event, $ru-event) is export {
 sub get-appearance-year($sunrise, $birth-year) is export {
     my $year = $sunrise.substr(0..3).Int;
     return $year - $birth-year + 1;
+}
+
+sub get-prev-paksha($tithi, $paksha) is export {
+    if $tithi eq 'pratipad' {
+        return $paksha eq 'K' ?? 'G' !! 'K';
+    }
+    else {
+        return $paksha;
+    }
+}
+
+sub get-prev-masa($masa) is export {
+    @masas = [
+        'vishnu',
+        'madhusudan',
+        'trivikram',
+        'vaman',
+        'shridhar',
+        'hrishikesh',
+        'padmanabha',
+        'damodar',
+        'keshava',
+        'narayan',
+        'madhava',
+        'govinda'
+    ];
+
+    my $index = @masas.first($masa, :k);
+    return 'govinda' if  $index == 0;
+    return @masas[$index - 1];
+}
+
+sub get-prev-tithi($tithi, $paksha) is export {
+    my @tithis = [
+        'pratipad',
+        'dvitiya',
+        'tritiya',
+        'chaturti',
+        'panchami',
+        'shashthi',
+        'saptami',
+        'ashtami',
+        'navami',
+        'dashami',
+        'ekadashi',
+        'dvadashi',
+        'trayodashi',
+        'chaturdashi',
+        'purnima'
+    ];
+
+    if $tithi eq 'pratipad' && $paksha eq 'G' {
+        return 'amavasya';
+    }
+    elsif $tithi eq 'pratipad' && $paksha eq 'K' {
+        return 'purnima';
+    }
+    elsif $tithi eq 'amavasya' {
+        return 'chaturdashi';
+    }
+    else {
+        my $index = @tithis.first($tithi, :k);
+        return @tithis[$index - 1];
+    }
 }
