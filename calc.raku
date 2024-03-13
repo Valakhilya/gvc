@@ -159,7 +159,7 @@ sub MAIN(Str $city, Int $year) {
             $navadvip, %navadvip-srss);
     }
     $next-day-sunrise-city = $city eq $navadvip ?? $next-day-sunrise-navadvip 
-            !! get-city-sunrise($next-date-navadvip, $city, %city-srss);
+            !! get-city-sunrise($next-date-city, $city, %city-srss);
 
     say 'Tithi next day sunrise in Nabadwip: '~ $next-day-sunrise-navadvip;
     say "Tithi next day sunrise in $city: " ~ $next-day-sunrise-city;
