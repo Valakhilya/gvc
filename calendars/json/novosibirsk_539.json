@@ -1479,23 +1479,33 @@
   },
   "2025-01-10": {
     "en-date-info": "<b>10</b>. (Fri) ",
-    "en-line": "<b>Trisprisha Mahadvadashi</b>. <b>Fast</b>. Appearance of <a href=\"http://scsmath.com/events/calendar_events/01_JagadishPandit.html\">Srila Jagadish Pandit.</a>",
+    "en-line": "No fast today (because next day is mahadvadashi). Appearance of <a href=\"http://scsmath.com/events/calendar_events/01_JagadishPandit.html\">Srila Jagadish Pandit.</a>",
     "en-masa-title": "Narayana",
     "en-tithi-title": "Gaura Ekadashi",
     "ru-date-info": "<b>10</b>. (Пятница) ",
-    "ru-line": "<b>Трисприша махадвадаши</b>. <b>Пост.</b> День явления Шрилы Джагадиша Пандита.",
+    "ru-line": "Экадаши, но нет поста (поскольку завтра махадвадаши). День явления Шрилы Джагадиша Пандита.",
     "ru-masa-title": "Нараяна маса",
     "ru-tithi-title": "Гаура Экадаши"
   },
   "2025-01-11": {
     "en-date-info": "<b>11</b>. (Sat) ",
-    "en-line": "Paran between 09:48 and 12:20.",
+    "en-line": "<b>Trisprisha Mahadvadashi</b>. <b>Fast</b>.",
     "en-masa-title": "Narayana",
     "en-tithi-title": "Gaura Dvadashi",
     "ru-date-info": "<b>11</b>. (Суббота) ",
-    "ru-line": "<b>Паран 09:48 — 12:20.</b>",
+    "ru-line": "<b>Трисприша махадвадаши</b>. <b>Пост.</b>",
     "ru-masa-title": "Нараяна маса",
     "ru-tithi-title": "Гаура Двадаши"
+  },
+  "2025-01-12": {
+    "en-date-info": "<b>12</b>. (Sun) ",
+    "en-line": "Paran between 09:47 and 12:20.",
+    "en-masa-title": "Narayana",
+    "en-tithi-title": "Gaura Chaturdashi",
+    "ru-date-info": "<b>12</b>. (Воскресенье) ",
+    "ru-line": "<b>Паран 09:47 — 12:20.</b>",
+    "ru-masa-title": "Нараяна маса",
+    "ru-tithi-title": "Гаура Чатурдаши"
   },
   "2025-01-13": {
     "en-date-info": "<b>13</b>. (Mon) ",
