@@ -2,6 +2,7 @@ logs/
 lib/.precomp/
 log.log
 build.sh
+parse.sh
 go.raku
 gen.raku
 gen_all.raku
