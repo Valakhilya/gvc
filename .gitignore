@@ -1,6 +1,7 @@
 logs/
 lib/.precomp/
 log.log
+build.sh
 go.raku
 gen.raku
 gen_all.raku

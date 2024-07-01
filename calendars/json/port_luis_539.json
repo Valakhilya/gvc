@@ -221,23 +221,33 @@
   },
   "2024-04-05": {
     "en-date-info": "<b>5</b>. (Fri) ",
-    "en-line": "<b>Trisprisha Mahadvadashi</b>. <b>Fast</b>.",
+    "en-line": "No fast today (because next day is mahadvadashi).",
     "en-masa-title": "Vishnu",
     "en-tithi-title": "Krishna Ekadashi",
     "ru-date-info": "<b>5</b>. (Пятница) ",
-    "ru-line": "<b>Трисприша махадвадаши</b>. <b>Пост.</b>",
+    "ru-line": "Экадаши, но нет поста (поскольку завтра махадвадаши).",
     "ru-masa-title": "Вишну маса",
     "ru-tithi-title": "Кришна Экадаши"
   },
   "2024-04-06": {
     "en-date-info": "<b>6</b>. (Sat) ",
-    "en-line": "Paran between 06:18 and 10:13. Festival in honour of <a href=\"http://scsmath.com/events/calendar_events/03_VarahaNagar.html\">Sriman Mahaprabhu's auspicious arrival at Varaha Nagar.</a> Disappearance of Srila Govinda Ghosh Thakur. Disappearance of Sripad Satyendrachandra Bhattacharya Mahoday.",
+    "en-line": "<b>Trisprisha Mahadvadashi</b>. <b>Fast</b>. Festival in honour of <a href=\"http://scsmath.com/events/calendar_events/03_VarahaNagar.html\">Sriman Mahaprabhu's auspicious arrival at Varaha Nagar.</a> Disappearance of Srila Govinda Ghosh Thakur. Disappearance of Sripad Satyendrachandra Bhattacharya Mahoday.",
     "en-masa-title": "Vishnu",
     "en-tithi-title": "Krishna Dvadashi",
     "ru-date-info": "<b>6</b>. (Суббота) ",
-    "ru-line": "<b>Паран 06:18 — 10:13.</b> Фестиваль в честь дня прибытия Шримана Махапрабху в Вараханагар. День ухода Шрилы Говинды Гхоша Тхакура. День ухода Шрипада Сатьендрачандры Бхаттачарьи Маходоя.",
+    "ru-line": "<b>Трисприша махадвадаши</b>. <b>Пост.</b> Фестиваль в честь дня прибытия Шримана Махапрабху в Вараханагар. День ухода Шрилы Говинды Гхоша Тхакура. День ухода Шрипада Сатьендрачандры Бхаттачарьи Маходоя.",
     "ru-masa-title": "Вишну маса",
     "ru-tithi-title": "Кришна Двадаши"
+  },
+  "2024-04-07": {
+    "en-date-info": "<b>7</b>. (Sun) ",
+    "en-line": "Paran between 06:18 and 10:13.",
+    "en-masa-title": "Vishnu",
+    "en-tithi-title": "Krishna Chaturdashi",
+    "ru-date-info": "<b>7</b>. (Воскресенье) ",
+    "ru-line": "<b>Паран 06:18 — 10:13.</b>",
+    "ru-masa-title": "Вишну маса",
+    "ru-tithi-title": "Кришна Чатурдаши"
   },
   "2024-04-13": {
     "en-date-info": "<b>13</b>. (Sat) ",
@@ -621,23 +631,33 @@
   },
   "2024-07-02": {
     "en-date-info": "<b>2</b>. (Tue) ",
-    "en-line": "<b>Trisprisha Mahadvadashi</b>. <b>Fast</b>. <a href=\"http://scsmath.com/events/calendar_events/06_RamaDevi.html\">Disappearance of Sriyukta Rama Devi.</a>",
+    "en-line": "No fast today (because next day is mahadvadashi). <a href=\"http://scsmath.com/events/calendar_events/06_RamaDevi.html\">Disappearance of Sriyukta Rama Devi.</a>",
     "en-masa-title": "Vaman",
     "en-tithi-title": "Krishna Ekadashi",
     "ru-date-info": "<b>2</b>. (Вторник) ",
-    "ru-line": "<b>Трисприша махадвадаши</b>. <b>Пост.</b> День ухода Шриюкты Рамы Деви.",
+    "ru-line": "Экадаши, но нет поста (поскольку завтра махадвадаши). День ухода Шриюкты Рамы Деви.",
     "ru-masa-title": "Вамана маса",
     "ru-tithi-title": "Кришна Экадаши"
   },
   "2024-07-03": {
     "en-date-info": "<b>3</b>. (Wed) ",
-    "en-line": "Paran between 06:46 and 10:24.",
+    "en-line": "<b>Trisprisha Mahadvadashi</b>. <b>Fast</b>.",
     "en-masa-title": "Vaman",
     "en-tithi-title": "Krishna Dvadashi",
     "ru-date-info": "<b>3</b>. (Среда) ",
-    "ru-line": "<b>Паран 06:46 — 10:24.</b>",
+    "ru-line": "<b>Трисприша махадвадаши</b>. <b>Пост.</b>",
     "ru-masa-title": "Вамана маса",
     "ru-tithi-title": "Кришна Двадаши"
+  },
+  "2024-07-04": {
+    "en-date-info": "<b>4</b>. (Thu) ",
+    "en-line": "Paran between 06:46 and 10:24.",
+    "en-masa-title": "Vaman",
+    "en-tithi-title": "Krishna Trayodashi",
+    "ru-date-info": "<b>4</b>. (Четверг) ",
+    "ru-line": "<b>Паран 06:46 — 10:24.</b>",
+    "ru-masa-title": "Вамана маса",
+    "ru-tithi-title": "Кришна Трайодаши"
   },
   "2024-07-05": {
     "en-date-info": "<b>5</b>. (Fri) ",

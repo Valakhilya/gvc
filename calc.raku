@@ -481,7 +481,7 @@ sub MAIN(Str $city, Int $year) {
                 elsif $trisprisha-test {
                     $fast-type = $mahadvadashi;
                     $mahadvadashi-name = $trisprisha;
-                    $fast-date = $date;
+                    $fast-date = $next-date;
                 }
                 elsif $vyanjuli-test {
                     $fast-type = $mahadvadashi;

@@ -1381,23 +1381,33 @@
   },
   "2024-12-11": {
     "en-date-info": "<b>11</b>. (Wed) ",
-    "en-line": "<b>Trisprisha Mahadvadashi</b>. <b>Fast</b>.",
+    "en-line": "No fast today (because next day is mahadvadashi).",
     "en-masa-title": "Keshava",
     "en-tithi-title": "Gaura Ekadashi",
     "ru-date-info": "<b>11</b>. (Среда) ",
-    "ru-line": "<b>Трисприша махадвадаши</b>. <b>Пост.</b>",
+    "ru-line": "Экадаши, но нет поста (поскольку завтра махадвадаши).",
     "ru-masa-title": "Кешава маса",
     "ru-tithi-title": "Гаура Экадаши"
   },
   "2024-12-12": {
     "en-date-info": "<b>12</b>. (Thu) ",
-    "en-line": "Paran between 07:42 and 10:36.",
+    "en-line": "<b>Trisprisha Mahadvadashi</b>. <b>Fast</b>.",
     "en-masa-title": "Keshava",
     "en-tithi-title": "Gaura Dvadashi",
     "ru-date-info": "<b>12</b>. (Четверг) ",
-    "ru-line": "<b>Паран 07:42 — 10:36.</b>",
+    "ru-line": "<b>Трисприша махадвадаши</b>. <b>Пост.</b>",
     "ru-masa-title": "Кешава маса",
     "ru-tithi-title": "Гаура Двадаши"
+  },
+  "2024-12-13": {
+    "en-date-info": "<b>13</b>. (Fri) ",
+    "en-line": "Paran between 07:43 and 10:37.",
+    "en-masa-title": "Keshava",
+    "en-tithi-title": "Gaura Trayodashi",
+    "ru-date-info": "<b>13</b>. (Пятница) ",
+    "ru-line": "<b>Паран 07:43 — 10:37.</b>",
+    "ru-masa-title": "Кешава маса",
+    "ru-tithi-title": "Гаура Трайодаши"
   },
   "2024-12-17": {
     "en-date-info": "<b>17</b>. (Tue) ",
@@ -1671,31 +1681,31 @@
   },
   "2025-02-08": {
     "en-date-info": "<b>8</b>. (Sat) ",
-    "en-line": "<b>Trisprisha Mahadvadashi</b>. <b>Fast</b>.",
+    "en-line": "No fast today (because next day is mahadvadashi).",
     "en-masa-title": "Madhava",
     "en-tithi-title": "Gaura Ekadashi",
     "ru-date-info": "<b>8</b>. (Суббота) ",
-    "ru-line": "<b>Трисприша махадвадаши</b>. <b>Пост.</b>",
+    "ru-line": "Экадаши, но нет поста (поскольку завтра махадвадаши).",
     "ru-masa-title": "Мадхава маса",
     "ru-tithi-title": "Гаура Экадаши"
   },
   "2025-02-09": {
     "en-date-info": "<b>9</b>. (Sun) ",
-    "en-line": "Paran between 07:20 and 10:43. <a href=\"http://scsmath.com/events/calendar_events/02_VarahaDvadasi.html\">Varaha Dvadashi. Appearance of Lord Varaha.</a>",
+    "en-line": "<b>Trisprisha Mahadvadashi</b>. <b>Fast</b>. <a href=\"http://scsmath.com/events/calendar_events/02_VarahaDvadasi.html\">Varaha Dvadashi. Appearance of Lord Varaha.</a>",
     "en-masa-title": "Madhava",
     "en-tithi-title": "Gaura Dvadashi",
     "ru-date-info": "<b>9</b>. (Воскресенье) ",
-    "ru-line": "<b>Паран 07:20 — 10:43.</b> Вараха Двадаши. День явления Господа Варахадева.",
+    "ru-line": "<b>Трисприша махадвадаши</b>. <b>Пост.</b> Вараха Двадаши. День явления Господа Варахадева.",
     "ru-masa-title": "Мадхава маса",
     "ru-tithi-title": "Гаура Двадаши"
   },
   "2025-02-10": {
     "en-date-info": "<b>10</b>. (Mon) ",
-    "en-line": "<a href=\"http://scsmath.com/events/calendar_events/02_NityanandasAppearance.html\"><b>Appearance of Sri Nityananda Prabhu.</b></a> Grand festival and installation anniversary of Sri Sri Guru Gaura Nityananda Jiu at Sree Chaitanya Saraswata Krishnanushilana Sangha, Ekachakra Dham.",
+    "en-line": "Paran between 07:19 and 10:42. <a href=\"http://scsmath.com/events/calendar_events/02_NityanandasAppearance.html\"><b>Appearance of Sri Nityananda Prabhu.</b></a> Grand festival and installation anniversary of Sri Sri Guru Gaura Nityananda Jiu at Sree Chaitanya Saraswata Krishnanushilana Sangha, Ekachakra Dham.",
     "en-masa-title": "Madhava",
     "en-tithi-title": "Gaura Trayodashi",
     "ru-date-info": "<b>10</b>. (Понедельник) ",
-    "ru-line": "<b>Явление Шри Нитьянанды Прабху</b>. Большой фестиваль в честь годовщины установления Шри Шри Гуру Гауры Нитьянанды Джиу в Шри Чайтанья Сарасвата Кришнанушилана Санге в Экачакра Дхаме.",
+    "ru-line": "<b>Паран 07:19 — 10:42.</b> <b>Явление Шри Нитьянанды Прабху</b>. Большой фестиваль в честь годовщины установления Шри Шри Гуру Гауры Нитьянанды Джиу в Шри Чайтанья Сарасвата Кришнанушилана Санге в Экачакра Дхаме.",
     "ru-masa-title": "Мадхава маса",
     "ru-tithi-title": "Гаура Трайодаши"
   },
