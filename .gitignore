@@ -3,6 +3,7 @@ lib/.precomp/
 log.log
 build.sh
 parse.sh
+.gitignore
 go.raku
 gen.raku
 gen_all.raku
