@@ -98,22 +98,26 @@ sub get-city-sunset($date, $city, %map) is export {
 }
 
 sub get-dst-data($city, $year) is export {
-    my $dst-times = "csv/dst.csv";
-    my $line = $dst-times.IO.lines.grep(*.contains("$city;$year"))[0];
+    my $dst-times = "csv/dst/{$year}.csv";
+    say $dst-times;
+    
+    my $line = $dst-times.IO.lines.grep(*.contains("$city"))[0];
+    say "Line is \n $line";
+    
     my %data;
     my @parts = $line.split: $delimeter;
-    %data{'dst1-start'} = @parts[2];
-    %data{'dst1-end'} = @parts[3];
-    %data{'dst2-start'} = @parts[4];
-    %data{'dst2-end'} = @parts[5];
+    %data{'dst1-start'} = @parts[1];
+    %data{'dst1-end'} = @parts[2];
+    %data{'dst2-start'} = @parts[3];
+    %data{'dst2-end'} = @parts[4];
+
     return %data;
 }
 
-sub local-time-zone($datetime, $city, $year) is export {
+sub local-time-zone($datetime, $city, $year, %dst) is export {
     my Bool $is-dst-offset;
     my DateTime $dt;
     my $tz = tz($city);
-    my %dst = get-dst-data($city, $year);
     my ($y, $m, $d) = $datetime.words[0].split: '-';
     my ($hh, $mm) = $datetime.words[1].split: ':';
 
@@ -202,10 +206,9 @@ sub get-current-year($date, $year) is export {
     }
 }
 
-sub get-nakshatras-map($city, $year) is export {
-    my @nakshatras = "csv/nakshatras_$year.csv".IO.lines;
+sub get-nakshatras-map($city, $year, %dst) is export {
+    my @nakshatras = "csv/nakshatras/nakshatras_$year.csv".IO.lines;
     my ($masa, $tithi, %data, @fields, $start, $end, $name);
-    @nakshatras.shift; # skip header
     for @nakshatras -> $line {
         @fields = $line.split: $delimeter;
 
@@ -222,8 +225,8 @@ sub get-nakshatras-map($city, $year) is export {
         $tithi = @fields[1];
         my $date = @fields[4].words[0];
         my $current-year = get-current-year($date, $year);
-        $start = local-time-zone(@fields[4], $city, $year);
-        $end = local-time-zone(@fields[5], $city, $year);
+        $start = local-time-zone(@fields[4], $city, $year, %dst);
+        $end = local-time-zone(@fields[5], $city, $year, %dst);
         $name = @fields[3];
         %data{$current-year}{$masa}{$tithi}{'start'} = $start;
         %data{$current-year}{$masa}{$tithi}{'end'} = $end;
@@ -235,7 +238,6 @@ sub get-nakshatras-map($city, $year) is export {
 sub get-ekadashis-map() is export {
     my @list = "csv/ekadashis.csv".IO.lines;
     my %map;
-    @list.shift; # skip header
     for @list -> $line {
         my ($masa, $paksha, $slug, $name, $ru) =  $line.split: $delimeter;
         %map{$masa}{$paksha}{'slug'} = $slug;
@@ -245,10 +247,9 @@ sub get-ekadashis-map() is export {
     return %map;
 }
 
-sub get-events-map() is export {
+sub get-events-map($city) is export {
     my %map;
     my @events = 'csv/events.csv'.IO.lines;
-    @events.shift; #skip header
     for @events -> $line {
         my ($masa, $tithi, $paksha, $slug, $en, $ru) = 
             $line.split: $delimeter;
@@ -258,13 +259,34 @@ sub get-events-map() is export {
             'ru' => $ru
         );
     }
+
+    my @specials = './csv/specials.csv'.IO.lines;
+    for @specials -> $line {
+        my ($masa, $tithi, $paksha, $special-city, $ru-event) = 
+            $line.split: $delimeter;
+        next unless $special-city eq $city;
+        if %map{$masa}{$tithi}{$paksha}:exists {
+            my %e = %map{$masa}{$tithi}{$paksha};
+            %map{$masa}{$tithi}{$paksha} = (
+                <slug> => %e<slug>,
+                <en> => %e<en>,
+                <ru> => %e<ru> ~ ' ' ~ $ru-event;
+            );
+        } 
+        else {
+            %map{$masa}{$tithi}{$paksha} = (
+                <slug> => '',
+                <en> => '',
+                <ru> => $ru-event
+            )
+        }
+    }
     return %map;
 }
 
 sub get-mahadvadashis-map() is export {
     my %map;
     my @list = 'csv/mahadvadashis.csv'.IO.lines;
-    @list.shift; # skip header
     for @list -> $line {
         my ($slug, $en, $ru) = $line.split: $delimeter;
         %map{$slug}{'en'} = $en; 
@@ -276,7 +298,6 @@ sub get-mahadvadashis-map() is export {
 sub get-tithi-names-map() is export {
     my %map;
     my @tithi-names = 'csv/tithis.csv'.IO.lines;
-    @tithi-names.shift; # skip header
     for @tithi-names -> $line {
         my ($tithi, $paksha, $en, $ru) = $line.split: $delimeter;
         %map{$paksha}.push: $tithi;
@@ -403,7 +424,6 @@ sub get-date-info($date, $locale) is export {
 sub get-masa-titles-map() is export {
     my @list = 'csv/masas.csv'.IO.lines;
     my %map;
-    @list.shift; # skip header
     for @list -> $line {
         my ($masa, $en, $ru) = $line.split: $delimeter;
         %map{$masa}{'en'} = $en;
@@ -580,7 +600,6 @@ sub add-parikrama-day($date, %map, $dataline, $locale) is export {
 
 sub add-dates(%map, $year) is export {
     my @list = 'csv/dates.csv'.IO.lines;
-    @list.shift; # skip header
     for @list -> $line {
         my ($y, $slug, $date, $en, $ru) = $line.split: $delimeter;
         next unless $y.Int == $year.Int;
@@ -605,7 +624,22 @@ sub add-dates(%map, $year) is export {
     }
 }
 
-sub add-event-line($date, %calendar, $en-event, $ru-event) is export {
+sub add-event($date, %calendar, $en-event, $ru-event) is export {
+    if %calendar{$date}{'en-line'} {
+        %calendar{$date}{'en-line'} ~= ' ' ~ $en-event
+    }
+    else {
+        %calendar{$date}{'en-line'} = $en-event;
+    }
+    if %calendar{$date}{'ru-line'} {
+        %calendar{$date}{'ru-line'} ~= ' ' ~ $ru-event
+    }
+    else {
+        %calendar{$date}{'ru-line'} = $ru-event;
+    }
+}
+
+sub add-fast-info($date, %calendar, $en-event, $ru-event) is export {
     say '';
     say 'Adding event lines:';
     say 'Date: ' ~ $date;
@@ -620,6 +654,59 @@ sub add-event-line($date, %calendar, $en-event, $ru-event) is export {
             %calendar{$date}{'en-line'};
         %calendar{$date}{'ru-line'} = $ru-event ~ ' ' ~ 
             %calendar{$date}{'ru-line'};
+    }
+}
+
+sub find-date-in-tithi-map-city ($date, $paksha, $year, $type, 
+    %tithi-map-city) {
+    my $tithi-name = '';
+    for %tithi-map-city{$year}.keys -> $masa {
+        for %tithi-map-city{$year}{$masa}.keys -> $tithi {
+            if %tithi-map-city{$year}{$masa}{$tithi}{$paksha}.defined {
+                if %tithi-map-city{$year}{$masa}{$tithi}{$paksha}<date> eq
+                    $date
+                && %tithi-map-city{$year}{$masa}{$tithi}{$paksha}<type> eq
+                    $type {
+                        say %tithi-map-city{$year}{$masa}{$tithi}{$paksha};
+                        $tithi-name = $tithi;
+                        say "Founded! $date $tithi-name"; 
+                last;
+                    }
+            }
+        }
+    }
+    return $tithi-name;
+}
+
+sub add-ekadashi-info($date, $paksha, $year, %calendar, %tithi-map-city,
+    %tithi-titles) is export {
+    my $paksha-name_en = $paksha eq 'K' ?? 'Krishna' !! 'Gaura';
+    my $paksha-name_ru = $paksha eq 'K' ?? 'Кришна' !! 'Гаура';
+    my $tithi-name = find-date-in-tithi-map-city($date, $paksha, $year,  
+        $shuddha, %tithi-map-city);
+
+
+    if not $tithi-name {
+        $tithi-name = find-date-in-tithi-map-city($date, $paksha, $year, 
+            $sampurna, %tithi-map-city);
+    }
+
+    if not $tithi-name {
+        my $yesterday = get-yesterday($date);
+        $tithi-name = find-date-in-tithi-map-city($yesterday, $paksha, $year, 
+        $sampurna, %tithi-map-city);
+    }
+
+    if $tithi-name {
+        %calendar{$date}{'en-date-info'} = get-date-info($date, 'en');
+        %calendar{$date}{'ru-date-info'} = get-date-info($date, 'ru');
+        my $info_en = $paksha-name_en ~ ' ' ~ 
+            %tithi-titles{$tithi-name}{'en'};
+        my $info_ru = $paksha-name_ru ~ ' ' ~ 
+            %tithi-titles{$tithi-name}{'ru'};
+        %calendar{$date}{'en-tithi-title'} = $info_en;
+        %calendar{$date}{'ru-tithi-title'} = $info_ru;
+        say %calendar{$date}{'ru-tithi-title'};
     }
 }
 
@@ -690,4 +777,18 @@ sub get-prev-tithi($tithi, $paksha) is export {
         my $index = @tithis.first($tithi, :k);
         return @tithis[$index - 1];
     }
+}
+
+sub get-city-name ($city) is export {
+    my @list = 'csv/cities.csv'.IO.lines.grep(*.contains($city));
+    my @fields = @list[0].split: ';';
+    my $city-name = @fields[0];
+    return $city-name;
+}
+
+sub get-accusative ($city) is export {
+    my @list = './csv/accusatives.csv'.IO.lines.grep(*.contains($city));
+    my @fields = @list[0].split: ';';
+    my $acc = @fields[1];
+    return $acc;
 }

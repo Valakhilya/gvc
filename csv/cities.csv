@@ -1,4 +1,3 @@
-name;slug;timezone;ru;geoname_id;timezone_offset
 Almaty;almaty;Asia/Almaty;Алма-Ата;1526384;6
 Amsterdam;amsterdam;Europe/Amsterdam;Амстердам;2759794;1
 Ankara;ankara;Europe/Istanbul;Анкара;323786;3
@@ -25,18 +24,21 @@ Helsinki;helsinki;Europe/Helsinki;Хельсинки;658225;2
 Herson;herson;Europe/Kiev;Херсон;706448;2
 Honolulu;honolulu;Pacific/Honolulu;Гонолулу;5856195;-10
 Istanbul;istanbul;Europe/Istanbul;Стамбул;745044;3
+Izhevsk;izhevsk;Europe/Samara;Ижевск;554840;4
 Johannesburg;johannesburg;Africa/Johannesburg;Йоханнесбург;993800;2
 Kazan;kazan;Europe/Moscow;Казань;551487;3
 Kaluga;kaluga;Europe/Moscow;Калуга;553915;3
 Khabarovsk;khabarovsk;Asia/Vladivostok;Хабаровск;2022890;10
 Khanty Mansiysk;khanty-mansiysk;Asia/Yekaterinburg;Ханты-Мансийск;1503772;5
 Kharkiv;kharkiv;Europe/Kiev;Харьков;706483;2
+Kostroma;kostroma;Europe/Moscow;Кострома;543878;3
 Krasnodar;krasnodar;Europe/Moscow;Краснодар;542420;3
 Krasnoyarsk;krasnoyarsk;Asia/Krasnoyarsk;Красноярск;1502026;7
 Kuala Lumpur;kuala_lumpur;Asia/Kuala_Lumpur;Куала-Лумпур;1735161;8
 Kyiv;kyiv;Europe/Kiev;Киев;703448;2
 Lima;lima;America/Lima;Лима;3936456;-5
 Linkoeping;linkoeping;Europe/Stockholm;Линчёпинг;2694762;1
+Lisbon;lisbon;Europe/Lisbon;Лиссабон;2267057;0
 London;london;Europe/London;Лондон;2643743;0
 Luhansk;luhansk;Europe/Moscow;Луганск;702658;3
 Luxembourg;luxembourg;Europe/Luxembourg;Люксембург;2960316;1
@@ -50,7 +52,7 @@ Milan;milan;Europe/Rome;Милан;3173435;1
 Minsk;minsk;Europe/Minsk;Минск;625144;3
 Morelia;morelia;America/Mexico_City;Морелия;3995402;-6
 Moscow;moscow;Europe/Moscow;Москва;524901;3
-Nabadwip;navadvip;Asia/Kolkata;Навадвип;1261669;5.5
+Nabadwip;nabadwip;Asia/Kolkata;Навадвип;1261669;5.5
 New York;new_york;America/New_York;Нью-Йорк;5128581;-5
 Nizhny Novgorod;nizhny_novgorod;Europe/Moscow;Нижний Новгород;520555;3
 Novgorod The Great;novgorod_the_great;Europe/Moscow;Великий Новгород;519336;3
@@ -74,7 +76,8 @@ Rostov-on-Don;rostov_on_don;Europe/Moscow;Ростов-на-Дону;501175;3
 Saint Petersburg;saint_petersburg;Europe/Moscow;Санкт-Петербург;498817;3
 Salt Lake City;salt_lake_city;America/Denver;Солт-Лейк-Сити;5780993;-7
 Samara;samara;Europe/Samara;Самара;499099;4
-San Luis Potosi;san_luis_potosi;America/Mexico_City;Сан-Луис-Потоси;3985606;-6
+Saratov;saratov;Europe/Saratov;Саратов;498677;4
+San Luis Potosi;san_luis_potosi;America/Mexico_City;Сан-Луи-Потоси;3985606;-6
 San Francisco;san_francisco;America/Los_Angeles;Сан-Франциско;5391959;-8
 Sau Paulo;san_paulo;America/Sao_Paulo;Сан-Паулу;3448439;-3
 Shenzhen;shenzhen;Asia/Shanghai;Шэньчжэнь;1795565;8

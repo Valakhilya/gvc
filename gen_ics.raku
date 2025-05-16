@@ -60,5 +60,5 @@ sub MAIN($city, $year, $locale) {
     mkdir $path if not $path ~~ :d;
     ($path.Str ~ "/{$city}_{$year}_{$locale}.ics").IO.spurt: $ical;
     ($path.Str ~ "/{$city}_{$year}_{$locale}.txt").IO.spurt: $ical;
-    'done.'.say;
+    say "Result saved in " ~ $path.Str ~ "/{$city}_{$year}_{$locale}.ics";
 }

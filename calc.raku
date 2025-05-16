@@ -8,33 +8,50 @@ use Constants;
 use Data;
 use Config;
 
+sub check_city($city) {
+    my @lines = './csv/cities.csv'.IO.lines;
+    my @cities;
+    for @lines -> $line {
+        my @parts = $line.split: $delimeter;
+        push @cities, @parts[1];
+    }
+
+    unless $city ∈ @cities {
+        say "No such city in the base: $city";
+        exit 0;
+    }
+}
+
 sub MAIN(Str $city, Int $year) {
     #  city is city slug in csv/cities.csv file
     #  and year is Gaurabda year number
+    check_city($city);
 
     my (%tithi-map-navadvip, %tithi-map-city, %tithi-srss, %tithi-by-date, 
         %calendar); 
+    my $city-name = get-city-name($city);
+    my $acc = get-accusative($city);
 
     # Initialize basic structures
 
     my $city-tz = tz($city); #timezone of the city
     # information about tithis from the csv/navadvip_$year.csv file
     my @tithis = get-navadvip-tithis($year); 
+    my %dst = get-dst-data($city, $year);
+
     # information about sunrises and sunsets
     my %city-srss = get-city-srss-map($city, $year);
     my %navadvip-srss = get-city-srss-map($navadvip, $year);
-    my %nakshatras = get-nakshatras-map($city, $year);
     my %ekadashis-map = get-ekadashis-map();
-    my %events = get-events-map();
+    my %events = get-events-map($city);
     # titles of the tithis
     my %tithi-names = get-tithi-names-map();
-
-    @tithis.shift; # skip header
 
     # We keep in tithi file data for three Gaurabda years:
     # current year, Govinda masa of previous year and Vishnu masa
     # of the next year
-    # variable current-masa is the title for masa on the current loop iteration
+    # variable current-masa is the title for masa on the current loop
+    # iteration
 
     my $current-masa = '';
     my @masas-list;
@@ -53,7 +70,7 @@ sub MAIN(Str $city, Int $year) {
     # end of current tithi for the city
 
     my $end-tithi-city = local-time-zone($end-tithi-navadvip, $city, 
-        $year);
+        $year, %dst);
 
     # if masa from line in the file differ from current-masa, then we put it
     # in the list
@@ -79,10 +96,15 @@ sub MAIN(Str $city, Int $year) {
     }
     else { # get tithis from the file for previous year
         my @prev-year-tithis = get-navadvip-tithis($year - 1);
+        my $m = $tithi eq $pratipad && $paksha eq 'K' ?? get-prev-masa($masa)
+                                                     !! $masa;
+        my $t = get-prev-tithi($tithi, $paksha);
+        my $p = get-prev-paksha($tithi, $paksha);
         my @grep = @prev-year-tithis.grep(*.contains(
-            ['madhava', 'purnima', 'G'].join: $delimeter));
+            [$m, $t, $p].join: $delimeter));
             $start-line = @grep[* - 1];
     }
+
     my ($start-masa-navadvip,
         $start-tithiname-navadvip, 
         $start-paksha-navadvip, 
@@ -91,7 +113,8 @@ sub MAIN(Str $city, Int $year) {
         $start-sunrise-navadvip,
         $start-sunset-navadvip) =
         parse-tithi-line($start-line);
-    my $start-tithi-city = local-time-zone($start-tithi-navadvip, $city, $year);
+    my $start-tithi-city = local-time-zone($start-tithi-navadvip, $city,
+        $year, %dst);
 
     say 'Start date in Navadwip: ' ~ $start-date-navadvip;
     say 'Start sunrise in Nabadwip: ' ~ $start-sunrise-navadvip;
@@ -333,6 +356,7 @@ sub MAIN(Str $city, Int $year) {
                 }
                 my $trayodashi-end = 
                     %tithi-map-city{$y}{$masa}{$trayodashi}{$paksha}{'end'};
+                
                 say 'Ekadashi start: ' ~ $start;
                 say 'Ekadashi end: ' ~ $end;
                 say 'Ekadashi date: ' ~ $date;
@@ -346,6 +370,7 @@ sub MAIN(Str $city, Int $year) {
                 say 'Dvadashi sunrise ' ~ $dvadashi-sunrise;
                 say 'Dvadashi sunset ' ~ $dvadashi-sunset;
 
+                my %nakshatras = get-nakshatras-map($city, $year, %dst);
                 my @nakshatras-list = %nakshatras{$y}{$masa}.values;
 
 # Nakshatra yoga test
@@ -433,7 +458,7 @@ sub MAIN(Str $city, Int $year) {
                         last if $nakshatra-yoga;
                     }
                 }
-                say 'No naksharras' unless @nakshatras-list;
+                say 'No nakshatras' unless @nakshatras-list;
                 say 'Nakshatra yoga: ' ~ $nakshatra-yoga;
 
 # Tithi test
@@ -441,14 +466,20 @@ sub MAIN(Str $city, Int $year) {
                 my Bool $ekadashi-is-pure = $purity eq $shuddha;
                 my $pakshavarddhini-tithi = $paksha eq 'K' ?? $amavasya 
                     !! $purnima;
-                my %p =
-                %tithi-map-city{$y}{$masa}{$pakshavarddhini-tithi}{$paksha};
-                say 'Pakshavarddhini tithi: ' ~ $pakshavarddhini-tithi;
-                say 'Pakshavarddhini tithi start: ' ~ %p{'start'};    
-                say 'Pakshavarddhini tithi end: ' ~ %p{'end'};    
-                say 'Pakshavarddhini tithi type: ' ~ %p{'type'};    
-                my Bool $pakshavarddhini-test = $ekadashi-is-pure &&
-                    %p{'type'} eq $sampurna;
+                my Bool $pakshavarddhini-test;
+                my %h = %tithi-map-city{$y}{$masa};
+                if (%h{$pakshavarddhini-tithi}.defined) {
+                    my %p = %h{$pakshavarddhini-tithi}{$paksha};
+                    say 'Pakshavarddhini tithi: ' ~ $pakshavarddhini-tithi;
+                    say 'Pakshavarddhini tithi start: ' ~ %p{'start'};    
+                    say 'Pakshavarddhini tithi end: ' ~ %p{'end'};    
+                    say 'Pakshavarddhini tithi type: ' ~ %p{'type'};    
+                    $pakshavarddhini-test = $ekadashi-is-pure &&
+                        %p{'type'} eq $sampurna;
+                }
+                else {
+                    $pakshavarddhini-test = False;
+                }
                 say 'Pakshavarddhini tithi test: ' ~ 
                     $pakshavarddhini-test; 
                 my Bool $unmilani-test = $ekadashi-is-pure
@@ -481,7 +512,7 @@ sub MAIN(Str $city, Int $year) {
                 elsif $trisprisha-test {
                     $fast-type = $mahadvadashi;
                     $mahadvadashi-name = $trisprisha;
-                    $fast-date = $next-date;
+                    $fast-date = $date;
                 }
                 elsif $vyanjuli-test {
                     $fast-type = $mahadvadashi;
@@ -569,7 +600,7 @@ sub MAIN(Str $city, Int $year) {
 
 # Gurudev's disappearance
 
-                if $fast-type eq $mahadvadashi && $masa eq $vishnu 
+                if $fast-type ∈ [$mahadvadashi, $viddha] && $masa eq $vishnu 
                     && $paksha eq 'G' {
                         $fast-date = get-yesterday($fast-date);
                 }
@@ -701,23 +732,16 @@ sub MAIN(Str $city, Int $year) {
     my $masa-before-purushottam = $purushottam-founded ?? 
         @masas-list[$purushottam-index - 1] !! '';
 
-    say 'Putting events';
-    # putting events
 
-    my $y;
+    my $y = $year-1;
     my (@pakshas, @tithi-list);
 
     loop ($i = 0; $i < @masas-list.elems; $i++) {
+
+    # makikg masas list
+
         my $masa = @masas-list[$i];
-        if $i == 0 {
-            $y = $year - 1;
-        }
-        elsif $i > 1 && @masas-list[$i] eq $vishnu {
-            $y = $year + 1;
-        }
-        else {
-            $y = $year;
-        }
+        $y++ if $masa eq $vishnu;
         if $purushottam-founded && $masa eq $masa-before-purushottam
             && $i < $purushottam-index {
             @tithi-list = %tithi-names{'K'}.List;
@@ -729,13 +753,19 @@ sub MAIN(Str $city, Int $year) {
                 @pakshas = ['G'];
         }
         elsif $purushottam-founded && $masa eq $purushottam {
-            @tithi-list = (%tithi-names{'G'}.List, %tithi-names{'K'}.List).flat;
+            @tithi-list = (%tithi-names{'G'}.List,
+                %tithi-names{'K'}.List).flat;
             @pakshas = ['G', 'K'];
         }
         else {
-            @tithi-list = (%tithi-names{'K'}.List, %tithi-names{'G'}.List).flat;
+            @tithi-list = (%tithi-names{'K'}.List,
+                %tithi-names{'G'}.List).flat;
             @pakshas = ['K', 'G'];
         }
+
+    say 'Putting events';
+
+    # putting events
 
         loop (my $j = 0; $j < @pakshas.elems; $j++) {
             my $paksha = @pakshas[$j];
@@ -756,6 +786,7 @@ sub MAIN(Str $city, Int $year) {
                     my $en-event = %e{'en'};
                     my ($sunrise, $sunset, $forenoon);
                     my %m = %tithi-map-city{$y};
+
                     if $slug eq $gaura-purnima {
                         $ru-event = sprintf($ru-event, $y);
                         $en-event = sprintf($en-event, $y);
@@ -765,27 +796,29 @@ sub MAIN(Str $city, Int $year) {
                         $sunset = %m{$vishnu}{$pratipad}{'K'}{'end-sunset'};
                         $forenoon = get-forenoon($sunrise, $sunset, $city-tz);
                         $ru-event = sprintf($ru-event, $sunrise.words[1],
-                            $forenoon.words[1], $y);
+                            $forenoon.words[1], $acc, $y);
                         $en-event = sprintf($en-event, $sunrise.words[1],
-                            $forenoon.words[1], $y);
+                            $forenoon.words[1], $city-name, $y);
                     }
                     elsif $slug eq $nrisimha-chaturdashi-paran {
-                        $sunrise=%m{$madhusudan}{$purnima}{'G'}{'end-sunrise'};
-                        $sunset = %m{$madhusudan}{$purnima}{'G'}{'end-sunset'};
+                        $sunrise =
+                            %m{$madhusudan}{$purnima}{'G'}{'end-sunrise'};
+                        $sunset =
+                            %m{$madhusudan}{$purnima}{'G'}{'end-sunset'};
                         $forenoon = get-forenoon($sunrise, $sunset, $city-tz);
                         $ru-event = sprintf($ru-event, $sunrise.words[1], 
-                            $forenoon.words[1]);
+                            $forenoon.words[1], $acc);
                         $en-event = sprintf($en-event, $sunrise.words[1],
-                            $forenoon.words[1]);
+                            $forenoon.words[1], $city-name);
                     }
                     elsif $slug eq $janmashtami-paran {
                         $sunrise=%m{$hrishikesh}{$navami}{'K'}{'end-sunrise'};
                         $sunset = %m{$hrishikesh}{$navami}{'K'}{'end-sunset'};
                         $forenoon = get-forenoon($sunrise, $sunset, $city-tz);
                         $ru-event = sprintf($ru-event, $sunrise.words[1], 
-                            $forenoon.words[1]);
+                            $forenoon.words[1], $acc);
                         $en-event = sprintf($en-event, $sunrise.words[1],
-                            $forenoon.words[1]);
+                            $forenoon.words[1], $city-name);
                     }
                     elsif $slug eq $shridhar-maharaj-appearance {
                         $sunrise = %m{$damodar}{$navami}{'K'}{'end-sunrise'};
@@ -807,12 +840,14 @@ sub MAIN(Str $city, Int $year) {
                         $en-event = sprintf($en-event, $a);
                     }
                     elsif $slug eq $sarasvati-thakur-appearance {
-                        $sunrise = %m{$govinda}{$panchami}{'K'}{'end-sunrise'};
+                        $sunrise =
+                            %m{$govinda}{$panchami}{'K'}{'end-sunrise'};
                         my $a = get-appearance-year($sunrise, 
                             $sarasvati-thakur-birth-year);
                         $ru-event = sprintf($ru-event, $a);
                         $en-event = sprintf($en-event, $a);
                     }
+
                     say 'Rus line: ' ~ $ru-event;
                     say 'Eng line: ' ~ $en-event;
                     say 'Year: ' ~ $y;
@@ -822,46 +857,20 @@ sub MAIN(Str $city, Int $year) {
                     say 'Date: ' ~ $date;
                     say 'Type: ' ~ $type;
                     say 'Purity: ' ~ $purity;
+
                     if $type eq $kshaya {
                         $ru-event = $ru-event.chop ~ sprintf($ru-kshaya, 
                             %tithi-titles{$tithi}{'ru'}.lc);
-                        $en-event=$en-event.chop ~ sprintf($en-kshaya, $tithi);
+                        $en-event = $en-event ~ sprintf($en-kshaya,
+                            $tithi);
+
                         if $tithi eq $navami { #special case
                             my $prev-date = get-yesterday($date);
-                            if %calendar{$prev-date}{'en-line'} {
-                                %calendar{$prev-date}{'en-line'} ~=
-                                    ' ' ~ $en-event;
-                            }
-                            else {
-                                %calendar{$prev-date}{'en-line'} =
-                                    $en-event;
-                            }
-                            if %calendar{$prev-date}{'ru-line'} {
-                                %calendar{$prev-date}{'ru-line'} ~=
-                                    ' ' ~ $ru-event;
-                            }
-                            else {
-                                %calendar{$prev-date}{'ru-line'} =
-                                    $ru-event;
-                            }
+                            add-event($prev-date, %calendar, $en-event,
+                                $ru-event);
                         }
                     }
-                    if %calendar{$date}{'en-line'} {
-                        %calendar{$date}{'en-line'} ~=
-                            ' ' ~ $en-event;
-                    }
-                    else {
-                        %calendar{$date}{'en-line'} =
-                            $en-event;
-                    }
-                    if %calendar{$date}{'ru-line'} {
-                        %calendar{$date}{'ru-line'} ~=
-                            ' ' ~ $ru-event;
-                    }
-                    else {
-                        %calendar{$date}{'ru-line'} =
-                            $ru-event;
-                    }
+                    add-event($date, %calendar, $en-event, $ru-event);
 
                     if $type eq $kshaya {
                         my %h = %tithi-by-date{$date}{$shuddha};
@@ -890,7 +899,7 @@ sub MAIN(Str $city, Int $year) {
     }
 
 
-# Parikrama
+# adding parikrama dates
 
     for [$year - 1, $year] -> $y {
         my $gaura-purnima-date = %gaurabda-years{$y}{'end'};
@@ -916,15 +925,15 @@ add-parikrama-day($fourth-day, %calendar, $parikrama-fourth-day-ru, 'ru');
 
     add-dates(%calendar, $year);
 
-# Ekadashis
+# adding ekadashis titles, names and parans info
 
     my %maha-map = get-mahadvadashis-map();
-    for [$year -1, $year, $year + 1] -> $y {
+    for [$year - 1, $year, $year + 1] -> $y {
         for @masas-list.unique -> $masa {
             for <K G> -> $paksha {
                 next if not %tithi-map-city{$y}{$masa}{$ekadashi}{$paksha};
                 say '';
-                say 'Adding ekadahis info:';
+                say 'Adding ekadashis info:';
                 say $y;
                 say $masa;
                 say $paksha;
@@ -945,24 +954,35 @@ add-parikrama-day($fourth-day, %calendar, $parikrama-fourth-day-ru, 'ru');
                 my $paran-start = %t{'paran-start'};
                 my $paran-end = %t{'paran-end'};
                 my Bool $is-vsy = %t{'is-vsy'};
-                my $paran-str-en = sprintf($en-paran, $paran-start.words[1], 
-                    $paran-end.words[1]);
-                my $paran-str-ru = sprintf($ru-paran, $paran-start.words[1], 
-                    $paran-end.words[1]);
                 my ($mahadvadashi-name, $en-maha, $ru-maha);
+                my $it-is-fast-en-str = sprintf($it-is-fast-en, $city-name);
+                my $it-is-fast-ru-str = sprintf($it-is-fast-ru, $acc);
+                my $paran-str-en = sprintf($en-paran, $paran-start.words[1], 
+                    $paran-end.words[1], $city-name);
+                my $paran-str-ru = sprintf($ru-paran, $paran-start.words[1], 
+                    $paran-end.words[1], $acc);
+                my $is-varaha-dvadashi = $masa eq $madhava && $paksha eq 'G';
+                my $is-vamana-dvadashi = $masa eq $hrishikesh && $paksha eq 'G';
 
-                if $type eq $viddha && $type ne $kshaya &&
+                if $purity eq $viddha && $type ne $kshaya &&
                     $fast-type ne $mahadvadashi {
-                    add-event-line($date, %calendar, $no-fast-en, $no-fast-ru);
-                    add-event-line($fast-date, %calendar, 
-                    "$en-name $it-is-fast-en", "$ru-name $it-is-fast-ru");
-                    add-event-line($paran-date, %calendar, $paran-str-en, 
+                    add-fast-info($date, %calendar, $no-fast-en, $no-fast-ru);
+                    add-fast-info($fast-date, %calendar, 
+                    "$en-name $it-is-fast-en-str", "$ru-name $it-is-fast-ru-str");
+                    add-fast-info($paran-date, %calendar, $paran-str-en, 
                         $paran-str-ru);
                 }
                 elsif $type eq $kshaya && $fast-type ne $mahadvadashi {
-                    add-event-line($fast-date, %calendar, 
-                    "$en-name $it-is-fast-en", "$ru-name $it-is-fast-ru");
-                    add-event-line($paran-date, %calendar, $paran-str-en, 
+                    my $it-is-kshaya-fast-en-str = 
+                        sprintf($it-is-kshaya-fast-en,
+                    $city-name);
+                    my $it-is-kshaya-fast-ru-str = 
+                        sprintf($it-is-kshaya-fast-ru,
+                    $acc);
+                    add-fast-info($fast-date, %calendar, 
+                    "$en-name $it-is-kshaya-fast-en-str",
+                    "$ru-name $it-is-kshaya-fast-ru-str");
+                    add-fast-info($paran-date, %calendar, $paran-str-en, 
                         $paran-str-ru);
                 }
                 elsif $fast-type eq $mahadvadashi && $fast-date ne $date
@@ -974,11 +994,14 @@ add-parikrama-day($fourth-day, %calendar, $parikrama-fourth-day-ru, 'ru');
                         $en-maha = $en-name ~ ' ' ~ $en-maha;
                         $ru-maha = $ru-name ~ ' ' ~ $ru-maha;
                     }
-                    add-event-line($date, %calendar, $no-fast-dvadashi-en, 
+                    if $mahadvadashi-name ne $trisprisha {
+                    add-fast-info($date, %calendar, $no-fast-dvadashi-en, 
                         $no-fast-dvadashi-ru);
-                    add-event-line($fast-date, %calendar, 
-                    "$en-maha $it-is-fast-en", "$ru-maha $it-is-fast-ru");
-                    add-event-line($paran-date, %calendar, $paran-str-en, 
+                    }
+                    add-fast-info($fast-date, %calendar, 
+                    "$en-maha $it-is-fast-en-str", "$ru-maha
+                    $it-is-fast-ru-str");
+                    add-fast-info($paran-date, %calendar, $paran-str-en, 
                         $paran-str-ru);
                 }
                 elsif $fast-type eq $mahadvadashi && $fast-date eq $date &&
@@ -990,15 +1013,38 @@ add-parikrama-day($fourth-day, %calendar, $parikrama-fourth-day-ru, 'ru');
                         $en-maha = $en-name ~ ' ' ~ $en-maha;
                         $ru-maha = $ru-name ~ ' ' ~ $ru-maha;
                     }
-                    add-event-line($date, %calendar, 
-                    "$en-maha $it-is-fast-en", "$ru-maha $it-is-fast-ru");
-                    add-event-line($paran-date, %calendar, $paran-str-en, 
+                    add-fast-info($date, %calendar, 
+                    "$en-maha $it-is-fast-en-str", "$ru-maha
+                    $it-is-fast-ru-str");
+                    if $is-varaha-dvadashi {
+                        $paran-str-en = sprintf($en-varaha-paran, 
+                        $paran-start.words[1], $paran-end.words[1], 
+                        $city-name);
+                        $paran-str-ru = sprintf($ru-varaha-paran,
+                        $paran-start.words[1], $paran-end.words[1], $acc);
+                    }
+                    elsif $is-vamana-dvadashi {
+                        $paran-str-en = sprintf($en-vamana-paran, 
+                        $paran-start.words[1], $paran-end.words[1], 
+                        $city-name);
+                        $paran-str-ru = sprintf($ru-vamana-paran,
+                        $paran-start.words[1], $paran-end.words[1], $acc);
+                    }
+                    add-fast-info($paran-date, %calendar, $paran-str-en, 
                         $paran-str-ru);
                 }
                 elsif $is-vsy && $date eq $fast-date && 
                     $fast-type ne $mahadvadashi {
-                    add-event-line($date, %calendar, $en-vsy1, $ru-vsy1);
-                    add-event-line($paran-date, %calendar, $paran-str-en, 
+                    my $en-vsy1-str = sprintf($en-vsy1, $city-name);
+                    my $ru-vsy1-str = sprintf($ru-vsy1, $acc);
+                    $paran-str-en = sprintf($en-vamana-paran, 
+                    $paran-start.words[1], $paran-end.words[1], 
+                    $city-name);
+                    $paran-str-ru = sprintf($ru-vamana-paran,
+                    $paran-start.words[1], $paran-end.words[1], $acc);
+                    add-fast-info($date, %calendar, $en-vsy1-str,
+                        $ru-vsy1-str);
+                    add-fast-info($paran-date, %calendar, $paran-str-en, 
                         $paran-str-ru);
                 }
                 elsif $is-vsy && $date eq $fast-date && 
@@ -1006,18 +1052,28 @@ add-parikrama-day($fourth-day, %calendar, $parikrama-fourth-day-ru, 'ru');
                     $mahadvadashi-name = %t{'mahadvadashi-name'};
                     $en-maha = %maha-map{$mahadvadashi-name}{'en'} ~ '.';
                     $ru-maha = %maha-map{$mahadvadashi-name}{'ru'} ~ '.';
-                    $en-vsy2 = sprintf($en-vsy2, $en-maha);
-                    $ru-vsy2 = sprintf($ru-vsy2, $ru-maha);
-                    add-event-line($date, %calendar, $en-vsy2, $ru-vsy2);
-                    add-event-line($paran-date, %calendar, $paran-str-en, 
+                    my $en-vsy2-str = sprintf($en-vsy2, $en-maha,
+                        $city-name);
+                    my $ru-vsy2-str = sprintf($ru-vsy2, $ru-maha, $acc);
+                    add-fast-info($date, %calendar, $en-vsy2-str,
+                        $ru-vsy2-str);
+                    $paran-str-en = sprintf($en-vamana-paran, 
+                    $paran-start.words[1], $paran-end.words[1], 
+                    $city-name);
+                    $paran-str-ru = sprintf($ru-vamana-paran,
+                    $paran-start.words[1], $paran-end.words[1], $acc);
+                    add-fast-info($paran-date, %calendar, $paran-str-en, 
                         $paran-str-ru);
                 } 
                 elsif $is-vsy && $date ne $fast-date && 
                     $fast-type ne $mahadvadashi {
-                    add-event-line($date, %calendar, $no-fast-vsy-en, 
+                    add-fast-info($date, %calendar, $no-fast-vsy-en, 
                         $no-fast-vsy-ru);
-                    add-event-line($fast-date, %calendar, $en-vsy3, $ru-vsy3);
-                    add-event-line($paran-date, %calendar, $paran-str-en, 
+                    my $en-vsy3-str = sprintf($en-vsy3, $city-name);
+                    my $ru-vsy3-str = sprintf($ru-vsy3, $acc);
+                    add-fast-info($fast-date, %calendar, $en-vsy3-str,
+                        $ru-vsy3-str);
+                    add-fast-info($paran-date, %calendar, $paran-str-en, 
                         $paran-str-ru);
                 }
                 elsif $is-vsy && $date ne $fast-date &&
@@ -1025,74 +1081,112 @@ add-parikrama-day($fourth-day, %calendar, $parikrama-fourth-day-ru, 'ru');
                     $mahadvadashi-name = %t{'mahadvadashi-name'};
                     $en-maha = %maha-map{$mahadvadashi-name}{'en'} ~ '.';
                     $ru-maha = %maha-map{$mahadvadashi-name}{'ru'} ~ '';
-                    $en-vsy4 = sprintf($en-vsy4, $en-maha);
-                    $ru-vsy4 = sprintf($ru-vsy4, $ru-maha);
-                    add-event-line($date, %calendar, $no-fast-vsy-en, 
+                    my $en-vsy4-str = sprintf($en-vsy4, $en-maha, $city-name);
+                    my $ru-vsy4-str = sprintf($ru-vsy4, $ru-maha, $acc);
+                    add-fast-info($date, %calendar, $no-fast-vsy-en, 
                         $no-fast-vsy-ru);
-                    add-event-line($fast-date, %calendar, $en-vsy4, $ru-vsy4);
-                    add-event-line($paran-date, %calendar, $paran-str-en, 
+                    add-fast-info($fast-date, %calendar, $en-vsy4-str,
+                        $ru-vsy4-str);
+                    add-fast-info($paran-date, %calendar, $paran-str-en, 
                         $paran-str-ru);
                 }
                 elsif $purity eq $shuddha && $date eq $fast-date {
-                    add-event-line($date, %calendar, 
-                    "$en-name $it-is-fast-en", "$ru-name $it-is-fast-ru");
-                    add-event-line($paran-date, %calendar, $paran-str-en, 
+                    add-fast-info($date, %calendar, 
+                    "$en-name $it-is-fast-en-str", "$ru-name
+                    $it-is-fast-ru-str");
+                    if $is-varaha-dvadashi {
+                        $paran-str-en = sprintf($en-varaha-paran, 
+                        $paran-start.words[1], $paran-end.words[1], 
+                        $city-name);
+                        $paran-str-ru = sprintf($ru-varaha-paran,
+                        $paran-start.words[1], $paran-end.words[1], $acc);
+                    }
+                    elsif $is-vamana-dvadashi {
+                        $paran-str-en = sprintf($en-vamana-paran, 
+                        $paran-start.words[1], $paran-end.words[1], 
+                        $city-name);
+                        $paran-str-ru = sprintf($ru-vamana-paran,
+                        $paran-start.words[1], $paran-end.words[1], $acc);
+                    }
+                    add-fast-info($paran-date, %calendar, $paran-str-en, 
                         $paran-str-ru);
                 }
                 else {
-                    add-event-line($fast-date, %calendar, 
-                    "$en-name $it-is-fast-en", "$ru-name $it-is-fast-ru");
-                    add-event-line($paran-date, %calendar, $paran-str-en, 
+                    add-fast-info($fast-date, %calendar, 
+                    "$en-name $it-is-fast-en-str", "$ru-name
+                    $it-is-fast-ru-str");
+                    if $is-varaha-dvadashi {
+                        $paran-str-en = sprintf($en-varaha-paran, 
+                        $paran-start.words[1], $paran-end.words[1], 
+                        $city-name);
+                        $paran-str-ru = sprintf($ru-varaha-paran,
+                        $paran-start.words[1], $paran-end.words[1], $acc);
+                    }
+                    elsif $is-vamana-dvadashi {
+                        $paran-str-en = sprintf($en-vamana-paran, 
+                        $paran-start.words[1], $paran-end.words[1], 
+                        $city-name);
+                        $paran-str-ru = sprintf($ru-vamana-paran,
+                        $paran-start.words[1], $paran-end.words[1], $acc);
+                    }
+                    add-fast-info($paran-date, %calendar, $paran-str-en, 
                         $paran-str-ru);
                 }
 
-                %calendar{$date}{'en-date-info'} = get-date-info($date, 'en');
-                %calendar{$date}{'ru-date-info'} = get-date-info($date, 'ru');
-                my $given-tithi = $type eq $kshaya ?? $dvadashi !! $ekadashi;
-                %calendar{$date}{'en-tithi-title'} = %pakshas{$paksha}{'en'} ~
-                     ' ' ~ %tithi-titles{$given-tithi}{'en'};
-                %calendar{$date}{'ru-tithi-title'} = %pakshas{$paksha}{'ru'} ~
-                     ' ' ~ %tithi-titles{$given-tithi}{'ru'};
+                if $city ne $navadvip {
+                    add-ekadashi-info($date, $paksha, $y, %calendar,
+                        %tithi-map-city, %tithi-titles);
+                    add-ekadashi-info($fast-date, $paksha, $y, %calendar,
+                        %tithi-map-city, %tithi-titles);
+                    add-ekadashi-info($paran-date, $paksha, $y, %calendar,
+                        %tithi-map-city, %tithi-titles);
+                }
             }
         }
     }
 
+    # adding tithi titles and date infos
+
     for %calendar.keys.sort -> $date {
         my $y = $date le %gaurabda-years{$year} ?? $year !! $year + 1;
-        my %h = %tithi-by-date{$date}{'shuddha'};
-        my $masa = %h{'masa'};
-        my $paksha = %h{'paksha'};
-        my $tithi = %h{'tithi'};
-        my $ru-masa-title = %masa-titles-map{$masa}{'ru'};
-        my $en-masa-title = %masa-titles-map{$masa}{'en'};
-        my ($en-tithi-title, $ru-tithi-title);
-        if $purushottam-founded && 
-            $masa eq $masa-before-purushottam && $paksha eq 'K' {
-            $ru-masa-title ~= $first-half-ru;
-            $en-masa-title ~= $first-half-en;
-        }
-        elsif $purushottam-founded && 
-            $masa eq $masa-before-purushottam && $paksha eq 'G' {
-            $ru-masa-title ~= $second-half-ru;
-            $en-masa-title ~= $second-half-en;
-        }
-        %calendar{$date}{'ru-masa-title'} = $ru-masa-title;
-        %calendar{$date}{'en-masa-title'} = $en-masa-title;
-        if not %calendar{$date}{'en-tithi-title'} {
-            $en-tithi-title = %tithi-titles{$tithi}{'en'};
-            $ru-tithi-title = %tithi-titles{$tithi}{'ru'};
-            if $tithi ne $amavasya && $tithi ne $purnima {
-                $en-tithi-title = %pakshas{$paksha}{'en'} ~ ' ' ~ 
-                    $en-tithi-title;
-                $ru-tithi-title = %pakshas{$paksha}{'ru'} ~ ' ' ~ 
-                    $ru-tithi-title;
+        if %tithi-by-date{$date}{'shuddha'}.defined {
+            my %h = %tithi-by-date{$date}{'shuddha'};
+            my $masa = %h{'masa'};
+            my $paksha = %h{'paksha'};
+            my $tithi = %h{'tithi'};
+            my $ru-masa-title = %masa-titles-map{$masa}{'ru'};
+            my $en-masa-title = %masa-titles-map{$masa}{'en'};
+            my ($en-tithi-title, $ru-tithi-title);
+            if $purushottam-founded && 
+                $masa eq $masa-before-purushottam && $paksha eq 'K' {
+                $ru-masa-title ~= $first-half-ru;
+                $en-masa-title ~= $first-half-en;
             }
-            %calendar{$date}{'en-tithi-title'} = $en-tithi-title;
-            %calendar{$date}{'ru-tithi-title'} = $ru-tithi-title;
-        }
-        if not %calendar{$date}{'en-date-info'} {
-            %calendar{$date}{'en-date-info'} = get-date-info($date, 'en');            
-            %calendar{$date}{'ru-date-info'} = get-date-info($date, 'ru');            
+            elsif $purushottam-founded && 
+                $masa eq $masa-before-purushottam && $paksha eq 'G' {
+                $ru-masa-title ~= $second-half-ru;
+                $en-masa-title ~= $second-half-en;
+            }
+
+            %calendar{$date}{'ru-masa-title'} = $ru-masa-title;
+            %calendar{$date}{'en-masa-title'} = $en-masa-title;
+
+            if not %calendar{$date}{'en-tithi-title'} {
+                $en-tithi-title = %tithi-titles{$tithi}{'en'};
+                $ru-tithi-title = %tithi-titles{$tithi}{'ru'};
+                if $tithi ne $amavasya && $tithi ne $purnima {
+                    $en-tithi-title = %pakshas{$paksha}{'en'} ~ ' ' ~ 
+                        $en-tithi-title;
+                    $ru-tithi-title = %pakshas{$paksha}{'ru'} ~ ' ' ~ 
+                        $ru-tithi-title;
+                }
+                %calendar{$date}{'en-tithi-title'} = $en-tithi-title;
+                %calendar{$date}{'ru-tithi-title'} = $ru-tithi-title;
+            }
+            if not %calendar{$date}{'en-date-info'} {
+                %calendar{$date}{'en-date-info'} = get-date-info($date, 'en');            
+                %calendar{$date}{'ru-date-info'} = get-date-info($date, 'ru');            
+            }
         }
     }
 
@@ -1105,7 +1199,7 @@ add-parikrama-day($fourth-day, %calendar, $parikrama-fourth-day-ru, 'ru');
 # putting to file
 
 "calendars/json/{$city}_$year.json".IO.spurt: to-json %calendar, :sorted-keys;
-    'done.'.say;
+    "result saved in calendars/json/{$city}_$year.json".say;
 
     exit 0;
 }

@@ -12,8 +12,9 @@ sub MAIN(Str $city, Int $year, Str $locale) {
     my @en-monts = <January February March April May June July August September
     October November December>;
     my $title = $locale eq 'ru' ??
-    "Календарь Шри Чайтанья Сарасват Матха,<br /> {$city-name}" !! "Gaudiya
-    Vaishnava calendar for {$city-name}";
+    "Календарь Шри Чайтанья Сарасват Матха,<br /> {$city-name}" !!
+    "Ekadashi Fasting Days and Breaking Fast (<em>paran</em>) Times after
+     Ekadashi and other fasting days for {$city-name}";
     my $subtitle = $locale eq 'ru' ?? "{$year1}/{$year2} год ({$year} эры
     Гаурабда)" !! "{$year1}/{$year2} year ($year year of Gaurabda era)";
     my %calendar = from-json "calendars/json/{$city}_{$year}.json".IO.slurp;
@@ -128,10 +129,10 @@ sub MAIN(Str $city, Int $year, Str $locale) {
 
     $out ~= $nav;
 
-    if $locale eq 'en' && $city ne 'navadvip' {
+    if $locale eq 'en'  {
         my $intro = 
         qq|<div class="m-4 p-5 rounded">
-            <p class="fs-2">Please, refer to our <a href="http://scsmath.com/events/calendar/index.html">main calendar for dates of festivals and other holydays, as they are same for all our world-wide mission.</a></p>
+            <p class="fs-2">Please, refer to our <a href="http://scsmath.com/events/calendar/index.html">main calendar for dates of festivals and other holydays, as they are same for all our world-wide mission.</a> Our special thanks to Srila Madhusudan Maharaj for inspiration and Sadhu Priya Prabhu for expert assistance!</p>
             </div>|;
 
         $out ~= $intro;
@@ -146,7 +147,7 @@ sub MAIN(Str $city, Int $year, Str $locale) {
         my $calendar-year = $date.substr: 0..3;
 
         if %calendar{$date}{"{$locale}-line"} {
-            if $locale eq 'ru' || $city eq 'navadvip' {
+            if $locale eq 'ru'  {
                 $sun-month = $locale eq 'ru' ?? @ru-months[$month-num - 1]  !! @en-monts[$month-num - 1];
                 if $sun-month ne $head-month {
                     $out ~= "
@@ -156,7 +157,6 @@ sub MAIN(Str $city, Int $year, Str $locale) {
                 }
 
                 $current-masa = $locale eq 'ru' ?? %calendar{$date}{'ru-masa-title'} !! %calendar{$date}{'en-masa-title'};
-
 
                 if (not $calendar-masa) || ($current-masa ne $calendar-masa) {
                     $calendar-masa = $current-masa;
@@ -173,38 +173,73 @@ sub MAIN(Str $city, Int $year, Str $locale) {
             }
             else {
                 my $cline = %calendar{$date}{"en-line"};
+                say $cline if $cline ~~ rx{'<b>Fast</b>' | Paran}; 
+
+                $sun-month = @en-monts[$month-num - 1];
+                if $cline ~~ rx{'<b>Fast</b>' | Paran} && 
+                    $sun-month ne $head-month && $current-masa {
+                    $out ~= "
+                    <h2 class='text-center'><u>{$sun-month} {$calendar-year}</u></h2>
+                    ";
+                    $head-month = $sun-month;
+                }
+
+                $current-masa = %calendar{$date}{'en-masa-title'};
+
+                if (not $calendar-masa) || ($current-masa ne $calendar-masa) {
+                    $calendar-masa = $current-masa;
+                    $out ~= "
+                        <h3 class='text-start text-uppercase'>{$calendar-masa}</h3>
+                    ";
+                }
+
                 if $cline.contains('<b>Fast</b>') {
-                    $sun-month = $locale eq 'ru' ?? @ru-months[$month-num - 1]  !! @en-monts[$month-num - 1];
-                    if $sun-month ne $head-month {
-                        $out ~= "
-                        <h2 class='text-center'><u>{$sun-month} {$calendar-year}</u></h2>
-                        ";
-                        $head-month = $sun-month;
-                    }
-
-                    $current-masa = $locale eq 'ru' ?? %calendar{$date}{'ru-masa-title'} !! %calendar{$date}{'en-masa-title'};
-
-
-                    if (not $calendar-masa) || ($current-masa ne $calendar-masa) {
-                        $calendar-masa = $current-masa;
-                        $out ~= "
-                            <h3 class='text-start text-uppercase'>{$calendar-masa}</h3>
-                        ";
-                    }
-
                     $out ~= "<p class='m3 text-start fs-5'>";
                     $out ~= %calendar{$date}{"en-date-info"};
                     $out ~= %calendar{$date}{"en-tithi-title"} ~ '. ';
-                    $cline .= subst(/ '<b>Fast</b>.'(.*)$ /, '<b>Fast</b>.');
-                    $out ~= $cline;
+                    my $right-index = $city eq 'nabadwip' ??
+                    $cline.index(')') + 1 !! $cline.index('(');
+                    $out ~= $cline.substr(0, $right-index) ~ '.';
                     $out ~= "</p>";
                 }
                 if $cline.contains('Paran') {
+                    say $cline;
                     $out ~= "<p class='m3 text-start fs-5'>";
                     $out ~= %calendar{$date}{"en-date-info"};
                     $out ~= %calendar{$date}{"en-tithi-title"} ~ '. ';
-                    my $ind = $cline.index('.');
-                    $out ~= $cline.substr(0, $ind);
+                    my $right-index = $city eq 'nabadwip' ?? 
+                    $cline.index(')') + 1 !! $cline.index('(');
+                    $out ~= $cline.substr(0, $right-index) ~ '.';
+                    $out ~= "</p>";
+                }
+                if $cline.contains('Gaura Purnima paran') {
+                    $out ~= "<p class='m3 text-start fs-5'>";
+                    $out ~= %calendar{$date}{"en-date-info"};
+                    $out ~= %calendar{$date}{"en-tithi-title"} ~ '. ';
+                    my $index = $cline.index('Anandotsav');
+                    $out ~= $cline.substr(0, $index - 1);
+                    $out ~= "</p>";
+                }
+                if $cline.contains('Nrisimha Chaturdashi paran') {
+                    $out ~= "<p class='m3 text-start fs-5'>";
+                    $out ~= %calendar{$date}{"en-date-info"};
+                    $out ~= %calendar{$date}{"en-tithi-title"} ~ '. ';
+                    my $index = $cline.index('a.m.');
+                    $out ~= $cline.substr(0, $index + 4);
+                    $out ~= "</p>";
+                }
+                if $cline.contains('Janmashtami paran') {
+                    $out ~= "<p class='m3 text-start fs-5'>";
+                    $out ~= %calendar{$date}{"en-date-info"};
+                    $out ~= %calendar{$date}{"en-tithi-title"} ~ '. ';
+                    my $left_index = $cline.index('Janmashtami paran');
+                    my $right_index = $cline.index('a.m.');
+                    say $cline;
+                    say $left_index;
+                    say $right_index;
+                    say $right_index - $left_index + 4;
+
+                    $out ~= $cline.substr($left_index, $right_index - $left_index + 4);
                     $out ~= "</p>";
                 }
             }
@@ -233,6 +268,5 @@ Q[
 my $path = "ekadashis/html/{$city}/{$year}/{$locale}".IO;
 mkdir $path if not $path ~~ :d;
 ($path.Str ~ '/index.html').IO.spurt: $out;
-'done.'.say;
-
+say "Result saved in " ~ $path.Str ~ '/index.html';
 }
