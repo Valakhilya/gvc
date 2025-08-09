@@ -55,10 +55,11 @@ sub get_random_ua {
 sub get_last_line {
     use File::ReadBackwards;
 
+    my $last_line = '';
     my $filename = shift;
     my $bw = File::ReadBackwards->new($filename) or 
         die ("Can not open file $filename");
-    my $last_line = $bw->readline;
+    $last_line = $bw->readline;
     $bw->close;
     chomp $last_line if defined $last_line;
     return $last_line;
@@ -170,6 +171,7 @@ sub main() {
         my $last_line = get_last_line($filename);
         my $date = get_next_date($last_line);
         show_title($city, $date, $gid);
+
         my $idx = 1;
         my $result = '';
         while  ((not $result) && $idx < $TRIES) {
