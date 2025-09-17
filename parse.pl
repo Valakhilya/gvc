@@ -186,9 +186,28 @@ sub main() {
             "not possible to get result from command. STOPPED\n";
             exit 1;
         }
-        my $data = decode_json($result);
 
-        if (not defined($data)) {
+        my $data;
+        eval {
+            $data = decode_json($result);
+        };
+        if ($@) {
+            print STDERR "Error decoding JSON: $@";
+            next MAIN_CYCLE;
+        }
+
+        # Добавляем проверки на существование данных
+        if (
+            !defined($data) ||
+            !defined($data->{panchangam_data}) ||
+            !defined($data->{panchangam_data}->{sunrise}) ||
+            !defined($data->{panchangam_data}->{sunset}) ||
+            !defined($data->{panchangam_data}->{sunrise}[0]) ||
+            !defined($data->{panchangam_data}->{sunset}[0]) ||
+            !defined($data->{panchangam_data}->{sunrise}[0]->{element_value}) ||
+            !defined($data->{panchangam_data}->{sunset}[0]->{element_value})
+        ) {
+            print STDERR "Malformed or incomplete data received. Skipping. \n";
             next MAIN_CYCLE;
         }
 
