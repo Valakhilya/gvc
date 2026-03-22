@@ -99,10 +99,8 @@ sub get-city-sunset($date, $city, %map) is export {
 
 sub get-dst-data($city, $year) is export {
     my $dst-times = "csv/dst/{$year}.csv";
-    say $dst-times;
     
     my $line = $dst-times.IO.lines.grep(*.contains("$city"))[0];
-    say "Line is \n $line";
     
     my %data;
     my @parts = $line.split: $delimeter;
@@ -312,6 +310,7 @@ sub calculate-tithi-date($tithi-start-str, $tithi-end-str,
 
     $date = $tithi-start-str ?? $tithi-start-str.words[0]
         !! $tithi-end-str.words[0];
+
     $next-day-date = get-tomorrow($date);
     $type = $shuddha;
     $purity = $shuddha;
@@ -599,12 +598,15 @@ sub add-parikrama-day($date, %map, $dataline, $locale) is export {
 }
 
 sub add-dates(%map, $year) is export {
+    my Bool $cond;
     my @list = 'csv/dates.csv'.IO.lines;
     for @list -> $line {
         my ($y, $slug, $date, $en, $ru) = $line.split: $delimeter;
-        next unless $y.Int == $year.Int;
+        $cond = ($slug eq 'sannyasa-lila-mahaprabhu' || $slug eq 'mahaprabhu-leaves-home') && $y == $year - 1; 
+        if ((not $cond) && $y != $year) {next};
         say '';
-        say 'Adding sun event: ';
+        say 'Adding Gregorian event: ';
+        say $y;
         say $en;
         say $ru;
         if not %map{$date} {
@@ -791,4 +793,22 @@ sub get-accusative ($city) is export {
     my @fields = @list[0].split: ';';
     my $acc = @fields[1];
     return $acc;
+}
+
+sub ordinal-suffix(Int $n --> Str) is export {
+    my $a = $n.abs;          # чтобы корректно работало и для отрицательных
+    my $mod100 = $a % 100;
+
+    return 'th' if $mod100 == 11 || $mod100 == 12 || $mod100 == 13;
+
+    given $a % 10 {
+        when 1 { 'st' }
+        when 2 { 'nd' }
+        when 3 { 'rd' }
+        default { 'th' }
+    }
+}
+
+sub ordinal(Int $n --> Str) {
+    "$n{ ordinal-suffix($n) }"
 }
