@@ -55,6 +55,7 @@ sub MAIN(Str $city, Int $year) {
 
     my $current-masa = '';
     my @masas-list;
+    my Bool $is-Gurudev-disappearance-shift = False;
 
     loop ( my $i = 0; $i < @tithis.elems; $i++ ) { #main cycle
 
@@ -160,23 +161,25 @@ sub MAIN(Str $city, Int $year) {
         $next-day-end-navadvip, $next-day-sunrise-navadvip, 
         $next-day-sunset-navadvip);
 
-    if (0 <= $i < @tithis.elems - 1) {
-        if $next-date-navadvip eq $current-date {
-            $next-day-sunrise-navadvip = $end-sunrise-navadvip
-        }
-        else {
-            my $next-line = @tithis[$i + 1];
-            if $next-line.contains($next-date-navadvip) {
-                ($next-masa-navadvip,
-                $next-tithi-navadvip,
-                $next-paksha-navadvip,
-                $next-date-navadvip, 
-                $next-day-end-navadvip,
-                $next-day-sunrise-navadvip, 
-                $next-day-sunset-navadvip) = parse-tithi-line($next-line);
-            }
-        }
+    if $next-date-navadvip eq $current-date {
+        $next-day-sunrise-navadvip = $end-sunrise-navadvip
     }
+
+    else {
+      if (0 <= $i < @tithis.elems - 1) {
+        my $next-line = @tithis[$i + 1];
+        if $next-line.contains($next-date-navadvip) {
+            ($next-masa-navadvip,
+            $next-tithi-navadvip,
+            $next-paksha-navadvip,
+            $next-date-navadvip, 
+            $next-day-end-navadvip,
+            $next-day-sunrise-navadvip, 
+            $next-day-sunset-navadvip) = parse-tithi-line($next-line);
+        }
+      }
+  }
+
     if not $next-day-sunrise-navadvip {
         $next-day-sunrise-navadvip = get-city-sunrise($next-date-navadvip,
             $navadvip, %navadvip-srss);
@@ -308,7 +311,23 @@ sub MAIN(Str $city, Int $year) {
 
     say '';
     say 'Calculating ekadashis: ';
+    @masas.push: $purushottam;
+    
     for [$year - 1, $year, $year + 1] -> $y {
+
+# Gurudev's disappearance
+
+        my $Gurudev-disappearanse-date;
+        if (%tithi-map-navadvip{$y}:exists)
+          && (%tithi-map-navadvip{$y}{$vishnu}:exists)
+          && (%tithi-map-navadvip{$y}{$vishnu}{$dvadashi}:exists)
+          && (%tithi-map-navadvip{$y}{$vishnu}{$dvadashi}{'G'}:exists)
+        {
+          $Gurudev-disappearanse-date = 
+            %tithi-map-navadvip{$y}{$vishnu}{$dvadashi}{'G'}{'date'};
+        }
+
+
         for @masas -> $masa {
             for ['K', 'G'] -> $paksha {
                 next unless %tithi-map-city{$y}{$masa}{$ekadashi}{$paksha};
@@ -319,8 +338,8 @@ sub MAIN(Str $city, Int $year) {
 
                 my %map = %tithi-map-city{$y}{$masa}{$ekadashi}{$paksha};
                 my %e = %ekadashis-map{$masa}{$paksha};
-                my $date = %map{'date'};
                 my $slug = %e{'slug'};
+                my $date = %map{'date'};
                 my $start = %map{'start'};
                 my $end = %map{'end'};
                 my $ekadashi-type = %map{'type'};
@@ -360,15 +379,16 @@ sub MAIN(Str $city, Int $year) {
                 say 'Ekadashi start: ' ~ $start;
                 say 'Ekadashi end: ' ~ $end;
                 say 'Ekadashi date: ' ~ $date;
-                say 'Ekadashi sunrise ' ~ $first-sunrise;
-                say 'Ekadashi next sunrise ' ~ $second-sunrise;
+                say 'Ekadashi sunrise: ' ~ $first-sunrise;
+                say 'Ekadashi next sunrise: ' ~ $second-sunrise;
                 say 'Ekadashi type: ' ~ $ekadashi-type;
                 say 'Arunoday: ' ~ $arunoday;
                 say 'Dvadashi start: ' ~ $dvadashi-start;
                 say 'Dvadashi end: ' ~ $dvadashi-end;
                 say 'Dvadashi date: ' ~ $dvadashi-date;
-                say 'Dvadashi sunrise ' ~ $dvadashi-sunrise;
-                say 'Dvadashi sunset ' ~ $dvadashi-sunset;
+                say 'Dvadashi sunrise: ' ~ $dvadashi-sunrise;
+                say 'Dvadashi sunset: ' ~ $dvadashi-sunset;
+                say 'Purity: ' ~ $purity;
 
                 my %nakshatras = get-nakshatras-map($city, $year, %dst);
                 my @nakshatras-list = %nakshatras{$y}{$masa}.values;
@@ -495,6 +515,7 @@ sub MAIN(Str $city, Int $year) {
 
                 my ($fast-date, $fast-type, $mahadvadashi-name);
                 $mahadvadashi-name = '';
+
                 if $nakshatra-yoga {
                     $fast-type = $nakshatra-type;
                     $fast-date = $next-date;
@@ -539,6 +560,9 @@ sub MAIN(Str $city, Int $year) {
                     $fast-date = $next-date;
                     $fast-type = $viddha;
                 }
+
+                say 'Fast date: ' ~ $fast-date;
+                say 'Ekadashi date: ' ~ $date;
 
                 if $fast-type eq $nakshatra-type {
                     $mahadvadashi-name = %nakshatra-yogas{$nakshatra-name};
@@ -588,23 +612,25 @@ sub MAIN(Str $city, Int $year) {
                         if $shravana-ends-after-sunset &&
                             $dvadashi-ends-after-sunset &&
                             $shravana-rules-dvadashi {
-                            $fast-date = $next-date;
+                              $fast-date = $next-date;
                         }
                         else {
-                            $fast-date = $date;
+                             $fast-date = $date;
                         }
                         $fast-type = $vsy-type;
                         say 'Vishnu shrinkhala yoga fast date: ' ~ $fast-date; 
                     }
                 }
 
-# Gurudev's disappearance
 
-                if $fast-type ∈ [$mahadvadashi, $viddha] && $masa eq $vishnu 
-                    && $paksha eq 'G' {
-                        $fast-date = get-yesterday($fast-date);
-                }
+# In Nabadwip date of Gurudev's disappearance should be calculated.
+                $is-Gurudev-disappearance-shift = 
+                ($fast-date eq ($Gurudev-disappearanse-date // ''));
 
+
+# Debug
+
+                say 'Fast date: ' ~ $fast-date;
                 say 'Ekadashi name: ' ~ $ekadashi-name;
                 say 'Ekadashi purity: ' ~ $purity;
                 say 'Ekadashi starts: ' ~ $start;
@@ -619,9 +645,18 @@ sub MAIN(Str $city, Int $year) {
 
 # Parans
 
+                if $is-Gurudev-disappearance-shift {
+                    $fast-type = $shuddha if $fast-type eq $viddha;
+                    $purity = $shuddha;
+                    $ekadashi-is-pure = True if $fast-type eq $viddha;
+                    $ekadashi-type = $shuddha;
+                    $fast-date = get-yesterday($fast-date);
+                }
+
                 my $paran-date = get-tomorrow($fast-date);
                 my ($paran-start, $paran-end);
                 say 'Paran date: ' ~ $paran-date;
+
                 my $paran-day-sunrise;
                 if $city eq $navadvip {
                     $paran-day-sunrise = 
@@ -642,8 +677,8 @@ sub MAIN(Str $city, Int $year) {
                 }
                 say 'Paran day sunset: ' ~ $paran-day-sunset;
 
-                if $ekadashi-is-pure && $fast-type eq $shuddha && 
-                    $fast-date eq $date {
+                if ($ekadashi-is-pure && $fast-type eq $shuddha && 
+                    $fast-date eq $date) {
                     ($paran-start, $paran-end) = get-shuddha-paran(
                         $paran-day-sunrise, $paran-day-sunset,
                         $dvadashi-start, $dvadashi-end, $city);
@@ -696,6 +731,8 @@ sub MAIN(Str $city, Int $year) {
                     $fast-date;
                 %tithi-map-city{$y}{$masa}{$ekadashi}{$paksha}{'fast-type'} = 
                     $fast-type;
+                %tithi-map-city{$y}{$masa}{$ekadashi}{$paksha}{'type'} = 
+                    $ekadashi-type;
                 %tithi-map-city{$y}{$masa}{$ekadashi}{$paksha}{'paran-date'} = 
                     $paran-date;
         %tithi-map-city{$y}{$masa}{$ekadashi}{$paksha}{'mahadvadashi-name'} = 
@@ -825,7 +862,7 @@ sub MAIN(Str $city, Int $year) {
                         my $a = get-appearance-year($sunrise, 
                             $shridhar-maharaj-birth-year);
                         $ru-event = sprintf($ru-event, $a);
-                        $en-event = sprintf($en-event, $a);
+                        $en-event = sprintf($en-event, $a, ordinal-suffix($a));
                     }
                     elsif $slug eq $govardhana-puja {
                         my $end = %m{$damodar}{$pratipad}{'G'}{'end'};
@@ -837,7 +874,7 @@ sub MAIN(Str $city, Int $year) {
                         my $a = get-appearance-year($sunrise, 
                             $gurudev-birth-year);
                         $ru-event = sprintf($ru-event, $a);
-                        $en-event = sprintf($en-event, $a);
+                        $en-event = sprintf($en-event, $a, ordinal-suffix($a));
                     }
                     elsif $slug eq $sarasvati-thakur-appearance {
                         $sunrise =
@@ -845,7 +882,7 @@ sub MAIN(Str $city, Int $year) {
                         my $a = get-appearance-year($sunrise, 
                             $sarasvati-thakur-birth-year);
                         $ru-event = sprintf($ru-event, $a);
-                        $en-event = sprintf($en-event, $a);
+                        $en-event = sprintf($en-event, $a, ordinal-suffix($a));
                     }
 
                     say 'Rus line: ' ~ $ru-event;
@@ -861,8 +898,7 @@ sub MAIN(Str $city, Int $year) {
                     if $type eq $kshaya {
                         $ru-event = $ru-event.chop ~ sprintf($ru-kshaya, 
                             %tithi-titles{$tithi}{'ru'}.lc);
-                        $en-event = $en-event ~ sprintf($en-kshaya,
-                            $tithi);
+                        $en-event = $en-event ~ $en-kshaya;
 
                         if $tithi eq $navami { #special case
                             my $prev-date = get-yesterday($date);
@@ -939,9 +975,6 @@ add-parikrama-day($fourth-day, %calendar, $parikrama-fourth-day-ru, 'ru');
                 say $paksha;
 
                 my %t = %tithi-map-city{$y}{$masa}{$ekadashi}{$paksha};
-                say "Ekadashi tithi map:";
-                say %t;
-
                 my $date = %t{'date'};
                 my $name = %t{'name'};
                 my $en-name = %ekadashis-map{$masa}{$paksha}{'name'} ~ '.';
@@ -1190,6 +1223,7 @@ add-parikrama-day($fourth-day, %calendar, $parikrama-fourth-day-ru, 'ru');
         }
     }
 
+    # Debug
     for %calendar.keys.sort -> $date {
         say '';
         say $date;
