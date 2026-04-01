@@ -619,14 +619,8 @@ sub MAIN(Str $city, Int $year) {
                         }
                         $fast-type = $vsy-type;
                         say 'Vishnu shrinkhala yoga fast date: ' ~ $fast-date; 
+                      }
                     }
-                }
-
-
-# In Nabadwip date of Gurudev's disappearance should be calculated.
-                $is-Gurudev-disappearance-shift = 
-                ($fast-date eq ($Gurudev-disappearanse-date // ''));
-
 
 # Debug
 
@@ -640,7 +634,7 @@ sub MAIN(Str $city, Int $year) {
                 say 'Dvadashi type: ' ~ $dvadashi-type;
                 say 'Fast type: '  ~ $fast-type;
                 say 'Fast date: ' ~ $fast-date;
-                say 'Mahadvadashi name: ' ~ $mahadvadashi-name \ 
+                say 'Mahadvadashi name: ' ~ $mahadvadashi-name
                     if $fast-type eq $mahadvadashi; 
 
 # Parans
