@@ -10,6 +10,33 @@ sub masa-title-html($masa, Str $locale --> Str) {
     return $title;
 }
 
+sub footer-html(Str $locale, Str $city, Int $year --> Str) {
+    my $en-class = $locale eq 'en' ?? 'current' !! '';
+    my $ru-class = $locale eq 'ru' ?? 'current' !! '';
+
+    return qq:to/HTML/ if $locale eq 'ru';
+<footer class="page-footer">
+    <p class="footer-title">Гаудия-вайшнавский календарь</p>
+    <p class="footer-links">
+        <a class="$en-class" href="/$city/$year/en">English</a>
+        <span>·</span>
+        <a class="$ru-class" href="/$city/$year/ru">Русский</a>
+    </p>
+</footer>
+HTML
+
+    return qq:to/HTML/;
+<footer class="page-footer">
+    <p class="footer-title">Gaudiya Vaishnava Calendar</p>
+    <p class="footer-links">
+        <a class="$en-class" href="/$city/$year/en">English</a>
+        <span>·</span>
+        <a class="$ru-class" href="/$city/$year/ru">Russian</a>
+    </p>
+</footer>
+HTML
+}
+
 sub page-style(--> Str) {
     return q:to/STYLE/;
 <style>
@@ -135,6 +162,60 @@ sub page-style(--> Str) {
         color: var(--muted);
     }
 
+    .notice-update {
+        padding: 0.75rem 0.9rem;
+        margin: 0 0 0.85rem 0;
+        background: #fffaf2;
+        border: 1px solid #efe1c8;
+        border-radius: 12px;
+        color: #5a4630;
+        font-size: 1.02rem;
+        line-height: 1.6;
+    }
+
+    .page-footer {
+        margin-top: 2.5rem;
+        padding-top: 1.1rem;
+        border-top: 1px solid var(--line);
+        text-align: center;
+}
+
+    .footer-title {
+        margin: 0 0 0.35rem 0;
+        color: var(--muted);
+        font-size: 0.98rem;
+        font-weight: 500;
+    }
+
+    .footer-links {
+        margin: 0;
+        font-size: 0.95rem;
+        color: var(--muted);
+    }
+
+    .footer-links a.current {
+        color: var(--ink);
+        font-weight: 600;
+        pointer-events: none;
+        cursor: default;
+        text-decoration: none;
+    }
+
+    .footer-links span {
+        margin: 0 0.35rem;
+        color: #bca98a;
+    }
+
+    .footer-links a {
+        color: var(--accent-dark);
+        text-decoration: none;
+    }
+
+    .footer-links a:hover {
+        color: #6d512d;
+        text-decoration: underline;
+    }
+
     .month-title {
         font-size: 2.25rem;
         font-weight: 600;
@@ -230,25 +311,39 @@ sub nav-html(Str $locale, Str $city, Int $year --> Str) {
 NAV
 }
 
-sub intro-html(--> Str) {
-    return q:to/INTRO/;
+sub intro-html(Str $locale --> Str) {
+    return q:to/HTML/ if $locale eq 'ru';
+<div class="notice-card">
+    <h2>Важное уведомление</h2>
+    <p class="notice-update">
+        <strong>Обратите внимание:</strong> Этот календарь был изменён шестого мая 2026 года.
+        Пожалуйста, обновите ваши файлы календаря в формате ICS.
+    </p>
+    <p>
+        Наша особая благодарность <strong>Шриле Мадхусудану Махараджу</strong> за вдохновение
+        и <strong>Шрипаду Садху Прии Прабху</strong> за квалифицированную помощь.
+    </p>
+</div>
+HTML
+
+    return q:to/HTML/;
 <div class="notice-card">
     <h2>Important Notice</h2>
     <p>
         Please refer to our
-        <a href="http://scsmath.com/events/calendar/index.html">main calendar</a>
+        <a href="http://scsmath.com/events/calendar/index.html"><strong>main calendar</strong></a>
         for festival dates and other holy days, as these are observed uniformly throughout our worldwide mission.
     </p>
-    <p>
-        <strong>Attention!</strong> Dear Vaiṣṇavas, the calendar was recalculated on March 22, 2026.
-        Please update your calendar files (ICS).
+    <p class="notice-update">
+        <strong>Please note:</strong> Dear Vaiṣṇavas, this calendar was recalculated on March 22, 2026.
+        Please update your ICS calendar files accordingly.
     </p>
     <p>
         Our special thanks to <strong>Srila Madhusudan Maharaj</strong> for inspiration
-        and <strong>Sadhu Priya Prabhu</strong> for expert assistance!
+        and <strong>Sripad Sadhu Priya Prabhu</strong> for expert assistance.
     </p>
 </div>
-INTRO
+HTML
 }
 
 sub render-day-line(%entry, Str $locale --> Str) {
@@ -342,9 +437,7 @@ sub MAIN(Str $city, Int $year, Str $locale) {
             {nav-html($locale, $city, $year)}
 HTML
 
-    if $locale eq 'en' {
-        $out ~= intro-html();
-    }
+    $out ~= intro-html($locale);
 
     my $head-month = '';
     my $calendar-masa = '';
@@ -415,7 +508,7 @@ HTML
         );
     }
 
-    $out ~= nav-html($locale, $city, $year);
+    $out ~= footer-html($locale, $city, $year);
     $out ~= q:to/ENDHTML/;
         </div>
     </body>
