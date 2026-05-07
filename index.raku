@@ -1,12 +1,35 @@
 #!/usr/bin/env raku
 
+sub sort-key(Str $s --> Str) {
+    $s.trans(
+        'ã' => 'a',
+        'á' => 'a',
+        'é' => 'e',
+        'ö' => 'o',
+        'ó' => 'o',
+        'ä' => 'a',
+        'ü' => 'u',
+        'ł' => 'l',
+        'ñ' => 'n',
+        'ç' => 'c',
+        'Ã' => 'A',
+        'Á' => 'A',
+        'É' => 'E',
+        'Ö' => 'O',
+        'Ó' => 'O',
+        'Ä' => 'A',
+        'Ü' => 'U',
+        'Ł' => 'L',
+        'Ñ' => 'N',
+        'Ç' => 'C'
+    ).lc
+}
+
 sub MAIN(Int $year, Str $locale) {
     my $year1 = 1485 + $year;
     my $year2 = $year1 + 1;
     my @list = 'csv/cities.csv'.IO.lines;
-    my @fields;
-    my (%en-cities, %ru-cities);
-    my ($current-city, $slug, $en-name, $ru-name);
+    my @cities;
 
     my $title = $locale eq 'ru'
         ?? 'Календарь Шри Чайтанья Сарасват Матха'
@@ -16,15 +39,26 @@ sub MAIN(Int $year, Str $locale) {
         ?? "Города и календарный год {$year1}/{$year2}"
         !! "Cities and calendar year {$year1}/{$year2}";
 
-    @list.shift;
 
     for @list -> $line {
-        @fields = $line.split(';');
-        $en-name = @fields[0];
-        $ru-name = @fields[3];
-        $slug = @fields[1];
-        %ru-cities{$ru-name} = $slug;
-        %en-cities{$en-name} = $slug;
+        next unless $line.trim.chars;
+
+        my @fields = $line.split(';');
+        next unless @fields.elems >= 2;
+
+        my $en-name = @fields[0].trim;
+        my $slug    = @fields[1].trim;
+        my $ru-name = @fields.elems >= 4 ?? @fields[3].trim !! $en-name;
+
+        next unless $en-name.chars && $slug.chars;
+
+        my $display = $locale eq 'ru' ?? $ru-name !! $en-name;
+
+        @cities.push({
+            display => $display,
+            slug    => $slug,
+            sort    => sort-key($display),
+        });
     }
 
     my $en-active = $locale eq 'ru' ?? '' !! 'active';
@@ -46,11 +80,12 @@ sub MAIN(Int $year, Str $locale) {
 </nav>
 NAV
 
-    my %map = $locale eq 'ru' ?? %ru-cities !! %en-cities;
     my $rows = '';
 
-    for %map.keys.sort -> $current-city {
-        $slug = %map{$current-city};
+    for @cities.sort(*<sort>) -> %city {
+        my $current-city = %city<display>;
+        my $slug = %city<slug>;
+
         $rows ~= qq:to/ROW/;
 <tr>
     <td class="city-name-cell">
