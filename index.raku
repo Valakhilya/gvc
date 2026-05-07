@@ -25,6 +25,84 @@ sub sort-key(Str $s --> Str) {
     ).lc
 }
 
+sub search_html(Str $locale --> Str) {
+    my $label       = $locale eq 'ru' ?? 'Искать город' !! 'Search by city';
+    my $placeholder = $locale eq 'ru'
+        ?? 'Начните вводить название города...'
+        !! 'Start typing a city name...';
+
+    return '<div class="city-search-wrap">'
+        ~ '<label for="city-search" class="city-search-label">' ~ $label ~ '</label>'
+        ~ '<input type="text" id="city-search" class="city-search-input" placeholder="' ~ $placeholder ~ '" autocomplete="off">'
+        ~ '</div>';
+}
+
+sub search_empty_html(Str $locale --> Str) {
+    my $text = $locale eq 'ru' ?? 'Ничего не найдено.' !! 'No cities found.';
+
+    return '<div id="city-search-empty" class="city-search-empty">' ~ $text ~ '</div>';
+}
+
+sub search_script_html(--> Str) {
+    return q:to/HTML/;
+<script>
+document.addEventListener('DOMContentLoaded', () => {
+    const input = document.getElementById('city-search');
+    const rows = Array.from(document.querySelectorAll('.cities-table tr'));
+    const empty = document.getElementById('city-search-empty');
+
+    if (!input || !rows.length) return;
+
+    const normalize = (s) =>
+        s.toLowerCase()
+         .normalize('NFD')
+         .replace(/[\u0300-\u036f]/g, '');
+
+    input.addEventListener('input', () => {
+        const query = normalize(input.value.trim());
+        let visibleCount = 0;
+
+        rows.forEach((row) => {
+            const cityLink = row.querySelector('.city-link');
+            const text = cityLink ? normalize(cityLink.textContent) : '';
+            const show = !query || text.includes(query);
+
+            row.style.display = show ? '' : 'none';
+            if (show) visibleCount++;
+        });
+
+        if (empty) {
+            empty.style.display = visibleCount === 0 ? 'block' : 'none';
+        }
+    });
+});
+</script>
+HTML
+}
+
+sub footer_html(Str $locale --> Str) {
+    my $en-class = $locale eq 'en' ?? 'current' !! '';
+    my $ru-class = $locale eq 'ru' ?? 'current' !! '';
+
+    my $title = $locale eq 'ru'
+        ?? 'Гаудия-вайшнавский календарь'
+        !! 'Gaudiya Vaishnava Calendar';
+
+    my $ru-label = $locale eq 'ru'
+        ?? 'Русский'
+        !! 'Russian';
+
+    return
+        '<footer class="page-footer">' ~
+            '<p class="footer-title">' ~ $title ~ '</p>' ~
+            '<p class="footer-links">' ~
+                '<a class="' ~ $en-class ~ '" href="/">English</a>' ~
+                '<span>·</span>' ~
+                '<a class="' ~ $ru-class ~ '" href="/ru">' ~ $ru-label ~ '</a>' ~
+            '</p>' ~
+        '</footer>';
+}
+
 sub MAIN(Int $year, Str $locale) {
     my $year1 = 1485 + $year;
     my $year2 = $year1 + 1;
@@ -283,6 +361,44 @@ ROW
             text-decoration: none;
         }
 
+        .city-search-wrap {
+            padding: 1rem 1.35rem 0;
+            background: linear-gradient(to bottom, #fffdfa, #fffaf2);
+        }
+
+        .city-search-label {
+            display: block;
+            margin: 0 0 0.45rem 0;
+            color: var(--muted);
+            font-size: 0.95rem;
+            font-weight: 500;
+        }
+
+        .city-search-input {
+            width: 100%;
+            padding: 0.75rem 0.95rem;
+            border: 1px solid #e7dac8;
+            border-radius: 12px;
+            background: #fff;
+            color: var(--ink);
+            font-family: 'Inter', sans-serif;
+            font-size: 16px;
+            outline: none;
+            transition: border-color .18s ease, box-shadow .18s ease;
+        }
+
+        .city-search-input:focus {
+            border-color: #d2b487;
+            box-shadow: 0 0 0 4px rgba(176, 141, 87, 0.12);
+        }
+
+        .city-search-empty {
+            display: none;
+            padding: 1rem 1.35rem 1.2rem;
+            color: var(--muted);
+            font-size: 0.96rem;
+        }
+
         .year-link-cell {
             text-align: right;
             white-space: nowrap;
@@ -305,27 +421,102 @@ ROW
             text-decoration: none;
         }
 
-        .footer-nav {
-            margin-top: 1.5rem;
+        .page-footer {
+            margin-top: 2.5rem;
+            padding-top: 1.1rem;
+            border-top: 1px solid var(--line);
+            text-align: center;
         }
+
+        .footer-title {
+            margin: 0 0 0.35rem 0;
+            color: var(--muted);
+            font-size: 0.98rem;
+            font-weight: 500;
+        }
+
+        .footer-links {
+            margin: 0;
+            font-size: 0.95rem;
+            color: var(--muted);
+        }
+
+        .footer-links span {
+            margin: 0 0.35rem;
+            color: #bca98a;
+        }
+
+        .footer-links a {
+            color: var(--accent-dark);
+            text-decoration: none;
+        }
+
+        .footer-links a:hover {
+            color: #6d512d;
+            text-decoration: underline;
+        }
+
+        .footer-links a.current {
+            color: var(--ink);
+            font-weight: 600;
+            pointer-events: none;
+            cursor: default;
+            text-decoration: none;
+        }
+
 
         @media (max-width: 768px) {
             .page-wrap {
                 padding: 1.25rem .75rem 2rem;
             }
 
-            .cities-card-header,
-            .cities-table td {
+            .cities-card-header {
                 padding-left: 1rem;
                 padding-right: 1rem;
             }
 
+            .cities-table,
+            .cities-table tbody,
+            .cities-table tr,
+            .cities-table td {
+                display: block;
+                width: 100%;
+            }
+
+            .cities-table tr {
+                padding: 0.95rem 1rem;
+                border-bottom: 1px solid #eee4d5;
+                background: transparent !important;
+            }
+
+            .cities-table tr:last-child {
+                border-bottom: none;
+            }
+
+            .cities-table td {
+                padding: 0;
+                border: 0;
+            }
+
+            .city-name-cell {
+                width: 100%;
+                margin-bottom: 0.55rem;
+            }
+
+            .year-link-cell {
+                width: 100%;
+                text-align: left;
+                white-space: normal;
+            }
+
             .city-link {
                 font-size: 1.25rem;
+                line-height: 1.2;
             }
 
             .year-link {
                 font-size: .9rem;
+                padding: 0.5rem 0.85rem;
             }
         }
     </style>
@@ -344,27 +535,38 @@ ROW
                 <p class="cities-card-note">__CARD_NOTE__</p>
             </div>
 
+            __SEARCH__
+
             <table class="cities-table">
                 __ROWS__
             </table>
+
+            __SEARCH_EMPTY__
         </section>
 
-        <div class="footer-nav">
-            __NAV__
-        </div>
+            __FOOTER__
     </div>
+    __SEARCH_SCRIPT__
 </body>
 </html>
 HTML
 
     my $out = $template;
+    my $search_html = search_html($locale);
+    my $search_empty_html = search_empty_html($locale);
+    my $search_script_html = search_script_html();
+    my $footer_html = footer_html($locale);
     $out ~~ s:g/__LOCALE__/$locale/;
     $out ~~ s:g/__TITLE__/$title/;
     $out ~~ s:g/__SUBTITLE__/$subtitle/;
     $out ~~ s:g/__NAV__/$nav/;
     $out ~~ s:g/__CARD_TITLE__/$card-title/;
     $out ~~ s:g/__CARD_NOTE__/$card-note/;
+    $out ~~ s:g/__SEARCH__/$search_html/;
+    $out ~~ s:g/__SEARCH_EMPTY__/$search_empty_html/;
+    $out ~~ s:g/__SEARCH_SCRIPT__/$search_script_html/;
     $out ~~ s:g/__ROWS__/$rows/;
+    $out ~~ s:g/__FOOTER__/$footer_html/;
 
     my $path = $locale eq 'ru' ?? 'ekadashis/html/ru'.IO !! 'ekadashis/html'.IO;
     mkdir $path if not $path ~~ :d;
